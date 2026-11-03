@@ -5,7 +5,8 @@ import {
   TriageResult,
   TeleconsultationAppointment,
   SpecialistReferral,
-  ManchesterPriority
+  ManchesterPriority,
+  ClinicalSoapNote
 } from '../types.ts';
 
 const API_BASE = '/api/v0';
@@ -80,6 +81,8 @@ export async function requestSpecialistReferral(data: {
   tipo: string;
   justificativa_clinica: string;
   crm_solicitante: string;
+  prioridade_declarada: 'BAIXA' | 'MEDIA' | 'ALTA' | 'URGENTE';
+  criterios_documentais: { pa_aferida: boolean; ecg_disponivel: boolean; creatinina_disponivel: boolean };
 }): Promise<SpecialistReferral> {
   const res = await fetch(`${API_BASE}/telehealth/referral`, {
     method: 'POST',
@@ -87,6 +90,47 @@ export async function requestSpecialistReferral(data: {
     body: JSON.stringify(data)
   });
   if (!res.ok) throw new Error('Falha ao solicitar encaminhamento');
+  return res.json();
+}
+export async function saveClinicalSoapNote(appointmentId: string, note: {
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+  cid10?: string;
+  ciap2?: string;
+  professionalRegistration: string;
+}): Promise<ClinicalSoapNote> {
+  const res = await fetch(`${API_BASE}/telehealth/appointments/${encodeURIComponent(appointmentId)}/soap`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(note)
+  });
+  if (!res.ok) throw new Error('Falha ao salvar registro SOAP');
+  return res.json();
+}
+
+export interface SignedDocumentVerificationPackage {
+  document: Record<string, unknown>;
+  signature: string;
+  public_key_hex: string;
+  sha256: string;
+}
+
+export async function verifySignedClinicalDocument(packageData: SignedDocumentVerificationPackage): Promise<{
+  integrityValid: boolean;
+  hashMatches: boolean;
+  signatureMatches: boolean;
+  issuerVerified: false;
+  status: string;
+  message: string;
+}> {
+  const res = await fetch(`${API_BASE}/telehealth/documents/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(packageData)
+  });
+  if (!res.ok) throw new Error('Pacote de verificação inválido');
   return res.json();
 }
 

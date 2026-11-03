@@ -1,4 +1,6 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
+import { verifySignedClinicalDocument } from '../services/clinicalWorkflow.js';
 import { NOVO_HAMBURGO_UNITS, MUNICIPALITY_METADATA } from '../config/units.js';
 import { StateManager } from '../services/stateManager.js';
 import { RoutingService } from '../services/routing.js';
@@ -170,24 +172,91 @@ export function createApiRouter(
     res.json(appt);
   });
 
+  router.post('/telehealth/appointments/:id/soap', async (req: Request, res: Response) => {
+    if (process.env.NODE_ENV === 'production') {
+      res.status(503).json({ erro: 'Fluxos clínicos demonstrativos estão desativados em produção.' });
+      return;
+    }
+    const schema = z.object({
+      subjective: z.string().trim().min(1).max(4000),
+      objective: z.string().trim().min(1).max(4000),
+      assessment: z.string().trim().min(1).max(4000),
+      plan: z.string().trim().min(1).max(4000),
+      cid10: z.string().trim().regex(/^[A-Z][0-9]{2}(\.[0-9]{1,2})?$/).optional(),
+      ciap2: z.string().trim().regex(/^[A-Z][0-9]{2}$/).optional(),
+      professionalRegistration: z.string().trim().min(4).max(80)
+    }).strict();
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ erro: 'Registro SOAP inválido', detalhes: parsed.error.flatten() });
+      return;
+    }
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const note = await telehealthService.saveClinicalNote(id, parsed.data);
+    if (!note) {
+      res.status(404).json({ erro: 'Consulta não encontrada' });
+      return;
+    }
+    res.status(201).json({ ...note, aviso: 'Demonstração com dados sintéticos; não registrar dados de pacientes reais.' });
+  });
+
+  router.post('/telehealth/documents/verify', (req: Request, res: Response) => {
+    const schema = z.object({
+      document: z.record(z.unknown()),
+      signature: z.string().regex(/^ed25519:[a-fA-F0-9]{128}$/),
+      public_key_hex: z.string().regex(/^[a-fA-F0-9]{64}$/),
+      sha256: z.string().regex(/^[a-fA-F0-9]{64}$/)
+    }).strict();
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ erro: 'Pacote de verificação inválido', detalhes: parsed.error.flatten() });
+      return;
+    }
+    res.json(verifySignedClinicalDocument({
+      document: parsed.data.document,
+      signature: parsed.data.signature,
+      publicKeyHex: parsed.data.public_key_hex,
+      sha256: parsed.data.sha256
+    }));
+  });
   // 9. Telessaude - Encaminhamentos e Teleinterconsultas com Especialistas
   router.post('/telehealth/referral', (req: Request, res: Response) => {
-    const {
-      consulta_id,
-      especialidade,
-      tipo,
-      justificativa_clinica,
-      crm_solicitante
-    } = req.body;
-
+    if (process.env.NODE_ENV === 'production') {
+      res.status(503).json({ erro: 'Fluxos clínicos demonstrativos estão desativados em produção.' });
+      return;
+    }
+    const schema = z.object({
+      consulta_id: z.string().trim().min(1).max(100),
+      especialidade: z.enum(['Cardiologia', 'Dermatologia', 'Ortopedia', 'Pediatria', 'Neurologia', 'Ginecologia', 'Psiquiatria']),
+      tipo: z.enum(['TELEINTERCONSULTA_IMEDIATA', 'REGULACAO_SISREG_PRIORITARIA']),
+      justificativa_clinica: z.string().trim().min(20).max(4000),
+      crm_solicitante: z.string().trim().min(4).max(80),
+      prioridade_declarada: z.enum(['BAIXA', 'MEDIA', 'ALTA', 'URGENTE']),
+      criterios_documentais: z.object({
+        pa_aferida: z.boolean(),
+        ecg_disponivel: z.boolean(),
+        creatinina_disponivel: z.boolean()
+      }).strict()
+    }).strict();
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ erro: 'Solicitação de encaminhamento inválida', detalhes: parsed.error.flatten() });
+      return;
+    }
+    const data = parsed.data;
     const referral = telehealthService.requestSpecialistReferral(
-      consulta_id,
-      especialidade as SpecialistField,
-      tipo || 'TELEINTERCONSULTA_IMEDIATA',
-      justificativa_clinica || 'Solicitacao de matriciamento clinico de especialista',
-      crm_solicitante || 'CRM/RS 41092'
+      data.consulta_id,
+      data.especialidade,
+      data.tipo,
+      data.justificativa_clinica,
+      data.crm_solicitante,
+      {
+        paAferida: data.criterios_documentais.pa_aferida,
+        ecgDisponivel: data.criterios_documentais.ecg_disponivel,
+        creatininaDisponivel: data.criterios_documentais.creatinina_disponivel
+      },
+      data.prioridade_declarada
     );
-
     res.status(201).json(referral);
   });
 
@@ -213,23 +282,17 @@ export function createApiRouter(
   // 10. Webhook WhatsApp Conversacional (Simulador / Provedor Real)
   router.post('/webhooks/whatsapp', (req: Request, res: Response) => {
     const { message, phone } = req.body;
-    const text = (message || '').toLowerCase();
-
+    const text = String(message || '').toLowerCase();
     let reply = '';
     if (text.includes('fila') || text.includes('espera') || text.includes('tempo')) {
-      const upa = stateManager.getStateById('upa_canudos');
-      const waitVerde = upa?.pow.prioridades.verde.wait_med_min ?? 55;
-      const waitAmarelo = upa?.pow.prioridades.amarelo.wait_med_min ?? 25;
-      reply = `🏥 *FlowCity Saúde - Novo Hamburgo*\n\nNa *UPA 24h Canudos* agora:\n🟡 *Amarelo (Urgente):* ~${waitAmarelo} min\n🟢 *Verde (Pouco urgente):* ~${waitVerde} min\n\n💡 *Dica:* Se for caso leve (verde/azul), você pode ser atendido por *Teleconsulta* agora ou ir à *USF Santo Afonso* (espera de apenas ~15 min).\n\nDigite *TRIAGEM* para avaliar seus sintomas ou *TELECONSULTA* para falar com um médico agora.`;
+      reply = 'Demonstração: os números exibidos não são dados operacionais validados e não devem orientar decisão de atendimento.';
     } else if (text.includes('triagem') || text.includes('dor') || text.includes('febre')) {
-      reply = `🩺 *Teletriagem do SUS - Novo Hamburgo*\n\nPor favor, informe qual o sintoma principal que está sentindo:\n1️⃣ Dor no peito ou falta de ar\n2️⃣ Dor de cabeça forte\n3️⃣ Sintomas gripais ou febre\n4️⃣ Dores no corpo ou articulações\n5️⃣ Lesão ou mancha na pele\n\n_Se for uma emergência com risco de vida, ligue imediatamente para o 192 (SAMU)._`;
+      reply = 'Este simulador não realiza triagem clínica. Em emergência, ligue 192; para orientações, contate uma unidade de saúde.';
     } else if (text.includes('teleconsulta')) {
-      const appt = telehealthService.createAppointment(`PAC-WPP-${phone || '4581'}`, 'Iniciado via WhatsApp');
-      reply = `✅ *Sua Teleconsulta da Atenção Primária foi agendada!*\n\n👨‍⚕️ *Médico:* ${appt.medico_mfc_nome}\n📋 *Protocolo:* ${appt.protocolo}\n\n🔗 Acesse sua sala segura de vídeo:\n${appt.link_sala_webrtc}\n\nO médico pode emitir receitas digitais com certificação ICP-Brasil e, se necessário, acionar um especialista na hora.`;
+      reply = 'Este canal não agenda consulta real, não abre sala de vídeo e não emite receitas. Procure sua unidade de saúde; em emergência, ligue 192.';
     } else {
-      reply = `Olá! Sou o assistente virtual do *FlowCity Saúde de Novo Hamburgo*.\n\nComo posso ajudar você hoje?\n- Digite *FILA* para ver tempos de espera das UPAs e hospitais.\n- Digite *TRIAGEM* para avaliar seus sintomas.\n- Digite *TELECONSULTA* para atendimento médico online sem sair de casa.`;
+      reply = 'Simulador FlowCity Saúde. Disponível para demonstração de interface e API; não conectado à rede municipal.';
     }
-
     res.json({
       status: 'success',
       reply_text: reply,

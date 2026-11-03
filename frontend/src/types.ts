@@ -93,6 +93,17 @@ export type SpecialistField =
   | 'Ginecologia'
   | 'Psiquiatria';
 
+export interface ClinicalSoapNote {
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+  cid10?: string;
+  ciap2?: string;
+  professionalRegistration: string;
+  updatedAt: string;
+  dataMode: 'SYNTHETIC_DEMO';
+}
 export interface TeleconsultationAppointment {
   id: string;
   protocolo: string;
@@ -103,6 +114,7 @@ export interface TeleconsultationAppointment {
   medico_crm: string;
   link_sala_webrtc: string;
   resumo_caso?: string;
+  soap_note?: ClinicalSoapNote;
   encaminhamento_especialista?: SpecialistReferral;
 }
 
@@ -116,4 +128,15 @@ export interface SpecialistReferral {
   timestamp_solicitacao: string;
   crm_solicitante: string;
   parecer_especialista?: string;
+  prioridade_declarada?: 'BAIXA' | 'MEDIA' | 'ALTA' | 'URGENTE';
+  score_prioridade_auxiliar?: number;
+  criterios_documentais?: {
+    pa_aferida: boolean;
+    ecg_disponivel: boolean;
+    creatinina_disponivel: boolean;
+    justificativa_completa: boolean;
+  };
+  pendencia_documental?: boolean;
+  decisao_regulador_pendente?: boolean;
+  data_mode?: 'SYNTHETIC_DEMO';
 }

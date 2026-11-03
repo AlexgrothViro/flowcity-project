@@ -1,5 +1,6 @@
-import { TeleconsultationAppointment, SpecialistReferral, SpecialistField } from '../types.js';
+import type { TeleconsultationAppointment, SpecialistReferral, SpecialistField, ClinicalSoapNote } from '../types.js';
 import { PersistenceService } from './persistence.js';
+import { assessReferralSupport, type DeclaredClinicalPriority, type ReferralEvidence } from './clinicalWorkflow.js';
 
 export class TelehealthService {
   private appointments: Map<string, TeleconsultationAppointment> = new Map();
@@ -9,7 +10,11 @@ export class TelehealthService {
 
   private persist(operation: Promise<void>): void {
     void operation.catch((error: unknown) => {
-      console.error(JSON.stringify({ level: 'error', event: 'telehealth_persistence_failed', message: error instanceof Error ? error.message : 'unknown error' }));
+      console.error(JSON.stringify({
+        level: 'error',
+        event: 'telehealth_persistence_failed',
+        message: error instanceof Error ? error.message : 'unknown error'
+      }));
     });
   }
 
@@ -44,6 +49,34 @@ export class TelehealthService {
     return appointment;
   }
 
+  public async saveClinicalNote(
+    appointmentId: string,
+    note: Omit<ClinicalSoapNote, 'updatedAt' | 'dataMode'>
+  ): Promise<ClinicalSoapNote | undefined> {
+    const appointment = this.appointments.get(appointmentId);
+    if (!appointment) return undefined;
+    const savedNote: ClinicalSoapNote = {
+      ...note,
+      updatedAt: new Date().toISOString(),
+      dataMode: 'SYNTHETIC_DEMO'
+    };
+    appointment.soap_note = savedNote;
+    this.appointments.set(appointmentId, appointment);
+    await this.persistence.saveAppointment(appointment);
+    await this.persistence.appendAudit({
+      actor: 'telehealth',
+      action: 'clinical_note.saved',
+      entityType: 'telehealth_appointment',
+      entityId: appointmentId,
+      details: {
+        dataMode: savedNote.dataMode,
+        cid10Present: Boolean(savedNote.cid10),
+        ciap2Present: Boolean(savedNote.ciap2)
+      }
+    });
+    return savedNote;
+  }
+
   public getAllAppointments(): TeleconsultationAppointment[] {
     return Array.from(this.appointments.values()).sort(
       (a, b) => new Date(b.timestamp_criacao).getTime() - new Date(a.timestamp_criacao).getTime()
@@ -59,18 +92,39 @@ export class TelehealthService {
     especialidade: SpecialistField,
     tipo: 'TELEINTERCONSULTA_IMEDIATA' | 'REGULACAO_SISREG_PRIORITARIA',
     justificativaClinica: string,
-    crmSolicitante: string
+    crmSolicitante: string,
+    evidence: ReferralEvidence = {},
+    declaredPriority: DeclaredClinicalPriority = 'MEDIA'
   ): SpecialistReferral {
     const referralId = `ref_${Date.now()}`;
+    const support = assessReferralSupport({
+      specialty: especialidade,
+      declaredPriority,
+      waitingDays: 0,
+      evidence: { ...evidence, justificativaCompleta: justificativaClinica.trim().length >= 20 }
+    });
     const referral: SpecialistReferral = {
       id: referralId,
       especialidade,
       tipo,
       justificativa_clinica: justificativaClinica,
-      prioridade_encaminhamento: 'ALTA',
+      prioridade_encaminhamento: declaredPriority === 'URGENTE' || declaredPriority === 'ALTA'
+        ? 'ALTA'
+        : declaredPriority === 'MEDIA' ? 'MEDIA' : 'BAIXA',
       status: 'SOLICITADO',
       timestamp_solicitacao: new Date().toISOString(),
-      crm_solicitante: crmSolicitante
+      crm_solicitante: crmSolicitante,
+      prioridade_declarada: declaredPriority,
+      score_prioridade_auxiliar: support.priorityScore,
+      criterios_documentais: {
+        pa_aferida: evidence.paAferida === true,
+        ecg_disponivel: evidence.ecgDisponivel === true,
+        creatinina_disponivel: evidence.creatininaDisponivel === true,
+        justificativa_completa: justificativaClinica.trim().length >= 20
+      },
+      pendencia_documental: support.cardiologyMinimumPending,
+      decisao_regulador_pendente: true,
+      data_mode: 'SYNTHETIC_DEMO'
     };
     this.referrals.set(referralId, referral);
     const appointment = this.appointments.get(appointmentId);
@@ -80,8 +134,19 @@ export class TelehealthService {
       this.persist(this.persistence.saveAppointment(appointment));
     }
     this.persist(this.persistence.saveReferral(referral));
-    this.persist(this.persistence.appendWorkflowEvent('consultation', null, { appointmentId, referralId, specialty: especialidade }));
-    this.persist(this.persistence.appendAudit({ actor: 'telehealth', action: 'referral.requested', entityType: 'specialist_referral', entityId: referralId }));
+    this.persist(this.persistence.appendWorkflowEvent('consultation', null, {
+      appointmentId,
+      referralId,
+      specialty: especialidade,
+      dataMode: 'SYNTHETIC_DEMO'
+    }));
+    this.persist(this.persistence.appendAudit({
+      actor: 'telehealth',
+      action: 'referral.requested',
+      entityType: 'specialist_referral',
+      entityId: referralId,
+      details: { specialty: especialidade, priority: declaredPriority, dataMode: 'SYNTHETIC_DEMO' }
+    }));
     return referral;
   }
 
