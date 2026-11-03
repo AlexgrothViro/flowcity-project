@@ -1,3 +1,5 @@
+@import 'leaflet/dist/leaflet.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,4 +8,22 @@ body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+.flowcity-map {
+  height: 420px;
+  width: 100%;
+  z-index: 0;
+}
+
+.flowcity-unit-marker,
+.flowcity-origin-marker {
+  background: transparent;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  .flowcity-map {
+    height: 340px;
+  }
 }

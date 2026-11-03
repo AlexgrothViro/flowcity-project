@@ -7,6 +7,7 @@ import {
   ManchesterPriority
 } from '../types.ts';
 import { ManchesterBadge } from '../components/ManchesterBadge.tsx';
+import { HealthMap } from '../components/HealthMap.tsx';
 import { requestRoute, evaluateTriage, createTelehealthAppointment } from '../services/api.ts';
 import {
   Compass,
@@ -195,6 +196,14 @@ export const CitizenView: React.FC<CitizenViewProps> = ({
           </button>
         </div>
       </div>
+
+      <HealthMap
+        units={units}
+        states={states}
+        filteredUnitIds={new Set(filteredUnits.map((unit) => unit.id))}
+        selectedUnit={selectedUnit}
+        onSelectUnit={setSelectedUnit}
+      />
 
       {/* Units Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
