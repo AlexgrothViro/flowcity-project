@@ -137,13 +137,18 @@ Inicia a aplicação completa, o cache em memória Redis e o banco TimescaleDB/P
 
 ---
 
-## 📚 Documentação Técnica e Jurídica
+## 📚 Documentação Técnica, Jurídica e Operacional
 
-* [Conformidade LGPD — ROPA e RIPD](docs/LGPD_ROPA_RIPD.md)
-* [Regulamentação de Telemedicina — CFM nº 2.314/2022](docs/TELEMEDICINA_CFM.md)
-* [Plano do Piloto em Novo Hamburgo (RS)](docs/PILOTO_NOVO_HAMBURGO.md)
-* [Arquitetura Técnica & Topologia](docs/ARQUITETURA_TECNICA.md)
-* [Modelo Matemático de Filas e Kalman Filter](docs/MODELO_MATEMATICO.md)
+* [Dossiê Executivo & Proposta para Gestores Públicos](docs/DOSSIE_EXECUTIVO_GOV.md) *(Diagnóstico, economia de recursos e contratação via Marco Legal das Startups)*
+* [Manual de Operação e Implantação de Campo](docs/MANUAL_OPERACIONAL_IMPLANTACAO.md) *(POPs para Enfermagem, Médicos da APS, Especialistas e SAMU)*
+* [Plano de Comunicação Social e Conscientização da População](docs/PLANO_COMUNICACAO_SOCIAL.md) *(Pedagogia de cores Manchester e campanhas de adesão)*
+* [Conformidade LGPD — ROPA e RIPD](docs/LGPD_ROPA_RIPD.md) *(Privacy by Design, k-anonimato e bases legais)*
+* [Regulamentação de Telemedicina — CFM nº 2.314/2022](docs/TELEMEDICINA_CFM.md) *(Diretrizes de teleconsulta e teleinterconsulta)*
+* [Plano do Piloto em Novo Hamburgo (RS)](docs/PILOTO_NOVO_HAMBURGO.md) *(Escopo de 90 dias com HMNH, UPA Canudos e USFs)*
+* [Arquitetura Técnica & Topologia](docs/ARQUITETURA_TECNICA.md) *(Diagramas C4 e padrões de interoperabilidade)*
+* [Modelo Matemático de Filas e Kalman Filter](docs/MODELO_MATEMATICO.md) *(Dedução de M/M/c/K e equações de estado)*
+* [Especificação OpenAPI 3.0 (Swagger)](docs/openapi.yaml) *(Especificação formal de endpoints e esquemas de dados)*
+* [Diretrizes de Contribuição](CONTRIBUTING.md) *(Padrões de código e fluxo de desenvolvimento)*
 
 ---
 

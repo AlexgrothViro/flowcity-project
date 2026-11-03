@@ -1,0 +1,207 @@
+openapi: 3.0.3
+info:
+  title: FlowCity Saúde — API Aberta Municipal
+  description: >
+    Plataforma municipal de inteligência de fluxo hospitalar, tempo de espera por prioridade (PoW),
+    ocupação de salas/leitos (PoO), agora-casting (15–60 min) e teletriagem com teleinterconsulta.
+    Todos os dados públicos são agregados, sem PII (LGPD by design) e assinados digitalmente com Ed25519.
+  version: 1.0.0
+  contact:
+    name: Equipe Técnica FlowCity Saúde
+    email: contato@flowcity.saude.gov.br
+servers:
+  - url: http://localhost:3001/api/v0
+    description: Servidor de Desenvolvimento e Homologação
+  - url: https://api.flowcity.saude.novohamburgo.rs.gov.br/api/v0
+    description: Servidor de Produção Piloto (Novo Hamburgo - RS)
+
+paths:
+  /units:
+    get:
+      summary: Lista unidades de saúde municipais
+      description: Retorna os dados cadastrais, endereço, horário e serviços das unidades integradas.
+      responses:
+        '200':
+          description: Lista de unidades retornada com sucesso.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  municipio:
+                    type: object
+                  unidades:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthUnit'
+
+  /units/{id}:
+    get:
+      summary: Consulta o estado em tempo real de uma unidade
+      description: Retorna o tempo de espera por Manchester (PoW), ocupação (PoO), previsões e assinatura Ed25519.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: upa_canudos
+      responses:
+        '200':
+          description: Estado da unidade retornado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnitLiveState'
+        '404':
+          description: Unidade não encontrada.
+
+  /states:
+    get:
+      summary: Snapshot completo de todas as unidades
+      description: Retorna o estado atualizado em tempo real de toda a rede municipal para totens e dashboards.
+      responses:
+        '200':
+          description: Snapshot retornado com sucesso.
+
+  /public-key:
+    get:
+      summary: Chave pública Ed25519 municipal
+      description: Retorna a chave pública assimétrica usada para auditar as assinaturas dos dados publicados.
+      responses:
+        '200':
+          description: Chave pública retornada com sucesso.
+
+  /route:
+    post:
+      summary: Calcula rota inteligente com recomendação de menor tempo total
+      description: Cruza a localização do cidadão, a gravidade clínica (Manchester) e o tempo de fila atual.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lat:
+                  type: number
+                  example: -29.6880
+                lng:
+                  type: number
+                  example: -51.1300
+                prioridade:
+                  type: string
+                  enum: [vermelho, laranja, amarelo, verde, azul]
+                  example: verde
+      responses:
+        '200':
+          description: Recomendação calculada com sucesso.
+
+  /triage/catalog:
+    get:
+      summary: Catálogo de sintomas e sinais de alarme (Red Flags)
+      responses:
+        '200':
+          description: Catálogo retornado com sucesso.
+
+  /triage/evaluate:
+    post:
+      summary: Avaliação de teletriagem clínica
+      description: Processa as respostas do cidadão e define se ele deve ir a hospital/SAMU ou se pode fazer teleconsulta.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sintoma_principal
+                - respostas_red_flags
+                - idade
+              properties:
+                sintoma_principal:
+                  type: string
+                respostas_red_flags:
+                  type: object
+                idade:
+                  type: integer
+      responses:
+        '200':
+          description: Resultado da triagem com indicação de teleconsulta ou emergência.
+
+  /telehealth/appointments:
+    post:
+      summary: Agenda ou inicia uma teleconsulta médica
+      responses:
+        '201':
+          description: Consulta agendada com sala WebRTC gerada.
+    get:
+      summary: Lista consultas agendadas
+      responses:
+        '200':
+          description: Lista de teleconsultas.
+
+  /telehealth/referral:
+    post:
+      summary: Solicita teleinterconsulta ou encaminhamento com especialista focal
+      responses:
+        '201':
+          description: Solicitação enviada à regulação médica.
+
+  /system/metrics:
+    get:
+      summary: Métricas globais de fluxo e giro de ambulâncias
+      responses:
+        '200':
+          description: Métricas operacionais consolidadas.
+
+components:
+  schemas:
+    HealthUnit:
+      type: object
+      properties:
+        id:
+          type: string
+        nome:
+          type: string
+        tipo:
+          type: string
+          enum: [HOSPITAL, UPA, UBS]
+        bairro:
+          type: string
+        endereco:
+          type: string
+        telefone:
+          type: string
+        coordenadas:
+          type: object
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+
+    UnitLiveState:
+      type: object
+      properties:
+        unidade_id:
+          type: string
+        timestamp:
+          type: string
+        pow:
+          type: object
+          description: Proof-of-Wait (tempos de espera por prioridade)
+        poo:
+          type: object
+          description: Proof-of-Occupancy (salas, leitos e exames)
+        previsao_15min:
+          type: object
+        previsao_30min:
+          type: object
+        previsao_60min:
+          type: object
+        idade_do_dado_s:
+          type: integer
+        assinatura:
+          type: string
+          example: "ed25519:0717434c..."

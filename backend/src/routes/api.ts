@@ -29,6 +29,19 @@ export function createApiRouter(
     });
   });
 
+  // 2.1 Especificacao OpenAPI 3.0 em formato JSON
+  router.get('/openapi.json', (_req: Request, res: Response) => {
+    res.json({
+      openapi: '3.0.3',
+      info: {
+        title: 'FlowCity Saúde — API Aberta Municipal',
+        version: '1.0.0',
+        description: 'Especificacao oficial da API Aberta Municipal (v0) para PoW, PoO, Agora-Casting e Telessaude.'
+      },
+      servers: [{ url: '/api/v0' }]
+    });
+  });
+
   // 3. Snapshot de Todas as Unidades (PoW / PoO / Previsoes)
   router.get('/states', (_req: Request, res: Response) => {
     res.json({
