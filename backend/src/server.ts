@@ -24,7 +24,7 @@ const stateManager = new StateManager(persistence);
 const telehealthService = new TelehealthService(persistence);
 
 // Conecta rotas REST
-app.use('/api/v0', createApiRouter(stateManager, telehealthService));
+app.use('/api/v0', createApiRouter(stateManager, telehealthService, persistence));
 
 // Endpoint SSE (Server-Sent Events) para clientes web leves sem WebSocket
 app.get('/api/v0/events/stream', (req: Request, res: Response) => {

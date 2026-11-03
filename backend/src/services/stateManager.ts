@@ -23,6 +23,10 @@ export class StateManager {
     return this.signer.getPublicKey();
   }
 
+  public signPublicPayload(payload: object): string {
+    return this.signer.signPayload(payload);
+  }
+
   private initializeStates() {
     // Inicializa estados realistas para as unidades de Novo Hamburgo
     const baseQueues: Record<string, Record<ManchesterPriority, number>> = {

@@ -4,7 +4,7 @@ import { ManchesterPriority } from '../types.ts';
 interface ManchesterBadgeProps {
   priority: ManchesterPriority;
   waitMinutes?: number;
-  count?: number;
+  count?: number | null;
   showDetails?: boolean;
 }
 
@@ -74,7 +74,7 @@ export const ManchesterBadge: React.FC<ManchesterBadgeProps> = ({
       <div className="flex items-center gap-2 font-mono">
         {count !== undefined && (
           <span className="bg-white/80 px-1.5 py-0.5 rounded text-[11px] font-bold">
-            {count} na fila
+            {count === null ? 'Contagem suprimida' : count} na fila
           </span>
         )}
         {waitMinutes !== undefined && (

@@ -1,7 +1,7 @@
 export type ManchesterPriority = 'vermelho' | 'laranja' | 'amarelo' | 'verde' | 'azul';
 
 export interface PriorityMetrics {
-  fila: number;
+  fila: number | null;
   wait_med_min: number;
   conf: number;
   pacientes_hora?: number;
@@ -34,23 +34,23 @@ export interface UnitLiveState {
   pow: {
     prioridades: Record<ManchesterPriority, PriorityMetrics>;
     tempo_medio_porta_triagem_min: number;
-    total_em_fila: number;
+    total_em_fila: number | null;
   };
   poo: {
     salas_abertas: number;
     salas_totais: number;
     ocupacao_salas: number;
     leitos_observacao: {
-      ocupados: number;
+      ocupados: number | null;
       capacidade: number;
     };
     diagnostico: {
-      raio_x: { operacional: boolean; fila_exames: number; tempo_medio_min: number };
-      laboratorio: { operacional: boolean; fila_exames: number; tempo_medio_min: number };
+      raio_x: { operacional: boolean; fila_exames: number | null; tempo_medio_min: number };
+      laboratorio: { operacional: boolean; fila_exames: number | null; tempo_medio_min: number };
     };
   };
   samu: {
-    ambulancias_retidas: number;
+    ambulancias_retidas: number | null;
     tempo_medio_giro_min: number;
   };
   previsao_15min: ForecastDelta;

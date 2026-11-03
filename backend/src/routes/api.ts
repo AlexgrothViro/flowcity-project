@@ -5,12 +5,18 @@ import { RoutingService } from '../services/routing.js';
 import { ClinicalTriageProtocol } from '../protocols/triage.js';
 import { TelehealthService } from '../services/telehealth.js';
 import { ManchesterPriority, SpecialistField, SymptomEvaluationRequest } from '../types.js';
+import { MonteCarloQueueSimulator } from '../engine/monteCarlo.js';
+import { ArrivalAnomalyDetector } from '../engine/anomaly.js';
+import { KAnonymityGuard } from '../services/privacy.js';
+import { PersistenceService } from '../services/persistence.js';
 
 export function createApiRouter(
   stateManager: StateManager,
-  telehealthService: TelehealthService
+  telehealthService: TelehealthService,
+  persistence?: PersistenceService
 ): Router {
   const router = Router();
+  const anomalyDetector = new ArrivalAnomalyDetector();
 
   // 1. Metadados e Unidades
   router.get('/units', (_req: Request, res: Response) => {
@@ -47,7 +53,7 @@ export function createApiRouter(
     res.json({
       timestamp: new Date().toISOString(),
       municipio: MUNICIPALITY_METADATA.municipio,
-      unidades: stateManager.getAllStates()
+      unidades: stateManager.getAllStates().map((state) => KAnonymityGuard.sanitizeState(state, (payload) => stateManager.signPublicPayload(payload)))
     });
   });
 
@@ -59,7 +65,7 @@ export function createApiRouter(
       res.status(404).json({ erro: 'Unidade nao encontrada' });
       return;
     }
-    res.json(state);
+    res.json(KAnonymityGuard.sanitizeState(state, (payload) => stateManager.signPublicPayload(payload)));
   });
 
   // 5. Rota Inteligente Baseada em Haversine + Espera Atual
@@ -79,6 +85,42 @@ export function createApiRouter(
     res.json(recommendation);
   });
 
+  // Scenario simulation is advisory and uses synthetic inputs only.
+  router.post('/simulation/queue', (req: Request, res: Response) => {
+    try {
+      const result = MonteCarloQueueSimulator.simulate(req.body);
+      res.json({ data_mode: 'SYNTHETIC_DEMO', result });
+    } catch (error) {
+      res.status(400).json({ erro: error instanceof Error ? error.message : 'Cenário inválido' });
+    }
+  });
+
+  router.post('/analytics/anomalies/observe', async (req: Request, res: Response) => {
+    try {
+      const { key, currentRate } = req.body as { key: string; currentRate: number };
+      const result = anomalyDetector.observe(key, currentRate);
+      if (result.isAnomaly && persistence) {
+        await persistence.appendWorkflowEvent('triage', null, {
+          type: 'epidemiological_anomaly',
+          key: result.key,
+          currentRate: result.currentRate,
+          baselineMean: result.baselineMean,
+          zScore: result.zScore,
+          cusum: result.cusum,
+          reason: result.reason
+        });
+        await persistence.appendAudit({
+          actor: 'anomaly-detector',
+          action: 'epidemiological_anomaly.detected',
+          entityType: 'alert',
+          details: { key: result.key, reason: result.reason }
+        });
+      }
+      res.json({ ...result, alert: result.isAnomaly });
+    } catch (error) {
+      res.status(400).json({ erro: error instanceof Error ? error.message : 'Métrica inválida' });
+    }
+  });
   // 6. Catalogo de Sintomas e Red Flags
   router.get('/triage/catalog', (_req: Request, res: Response) => {
     res.json({

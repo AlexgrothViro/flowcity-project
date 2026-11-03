@@ -268,7 +268,7 @@ export const CitizenView: React.FC<CitizenViewProps> = ({
               <div className="space-y-2 pt-2 border-t border-slate-100">
                 <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
                   <span>Tempo de Espera por Triagem (Manchester):</span>
-                  <span>{pow?.total_em_fila ?? 0} pacientes aguardando</span>
+                  <span>{pow?.total_em_fila === null ? 'Contagem suprimida' : (pow?.total_em_fila ?? 0) + ' pacientes aguardando'}</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -317,21 +317,22 @@ export const CitizenView: React.FC<CitizenViewProps> = ({
                     <div className="flex justify-between text-[11px] text-slate-500">
                       <span>Leitos de Observação:</span>
                       <span className="font-semibold text-slate-700">
-                        {poo.leitos_observacao.ocupados} / {poo.leitos_observacao.capacidade} ocupados (
-                        {Math.round((poo.leitos_observacao.ocupados / poo.leitos_observacao.capacidade) * 100)}%)
+                        {poo.leitos_observacao.ocupados === null
+                          ? 'Contagem suprimida'
+                          : <>{poo.leitos_observacao.ocupados} / {poo.leitos_observacao.capacidade} ocupados ({Math.round(((poo.leitos_observacao.ocupados ?? 0) / poo.leitos_observacao.capacidade) * 100)}%)</>}
                       </span>
                     </div>
-                    <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                    <div className={poo.leitos_observacao.ocupados === null ? "hidden" : "w-full bg-slate-200 h-1.5 rounded-full overflow-hidden"}>
                       <div
                         className={`h-full rounded-full ${
-                          poo.leitos_observacao.ocupados / poo.leitos_observacao.capacidade > 0.85
+                          (poo.leitos_observacao.ocupados ?? 0) / poo.leitos_observacao.capacidade > 0.85
                             ? 'bg-rose-500'
                             : 'bg-cyan-600'
                         }`}
                         style={{
                           width: `${Math.min(
                             100,
-                            (poo.leitos_observacao.ocupados / poo.leitos_observacao.capacidade) * 100
+                            ((poo.leitos_observacao.ocupados ?? 0) / poo.leitos_observacao.capacidade) * 100
                           )}%`
                         }}
                       />

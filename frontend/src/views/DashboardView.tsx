@@ -198,7 +198,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ units, states }) =
 
                   <div className="text-right">
                     <span className="text-2xl font-black text-slate-900">
-                      {st.pow.total_em_fila}
+                      {st.pow.total_em_fila ?? 'Contagem suprimida'}
                     </span>
                     <span className="text-[10px] text-slate-500 block">aguardando</span>
                   </div>
@@ -257,11 +257,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ units, states }) =
                   <span>
                     Leitos Obs:{' '}
                     <strong>
-                      {st.poo.leitos_observacao.ocupados}/{st.poo.leitos_observacao.capacidade}
+                      {st.poo.leitos_observacao.ocupados ?? 'Suprimido'}/{st.poo.leitos_observacao.capacidade}
                     </strong>
                   </span>
                   <span>
-                    Raio-X: <strong>{st.poo.diagnostico.raio_x.fila_exames} na fila</strong>
+                    Raio-X: <strong>{st.poo.diagnostico.raio_x.fila_exames ?? 'Suprimido'} na fila</strong>
                   </span>
                 </div>
               </div>

@@ -148,7 +148,7 @@ export const TotemView: React.FC<TotemViewProps> = ({ units, states }) => {
 
               <div className="pt-3 border-t border-black/10 text-center">
                 <span className="text-xs font-bold block bg-black/15 py-1 rounded-lg">
-                  {metric?.fila ?? 0} aguardando
+                  {metric?.fila === null ? 'Contagem suprimida' : (metric?.fila ?? 0) + ' aguardando'}
                 </span>
                 <p className="text-[10px] mt-2 leading-tight opacity-75 font-medium">
                   {p.desc}
@@ -186,7 +186,7 @@ export const TotemView: React.FC<TotemViewProps> = ({ units, states }) => {
               Leitos de Observação
             </span>
             <div className="text-2xl font-black text-white mt-1">
-              {currentState?.poo.leitos_observacao.ocupados ?? 0}{' '}
+              {currentState?.poo.leitos_observacao.ocupados ?? 'Suprimido'}{' '}
               <span className="text-sm font-normal text-slate-400">
                 / {currentState?.poo.leitos_observacao.capacidade ?? 0} leitos
               </span>
