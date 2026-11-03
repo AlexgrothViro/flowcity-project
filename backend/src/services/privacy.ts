@@ -33,6 +33,9 @@ export class KAnonymityGuard {
     if (!Number.isInteger(k) || k < KAnonymityGuard.MIN_GROUP_SIZE) {
       throw new Error('k must be an integer of at least 3');
     }
+    if (!Number.isInteger(count) || count < 0) {
+      throw new Error('count must be a non-negative integer');
+    }
     return count > 0 && count < k ? null : count;
   }
 
