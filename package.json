@@ -1,0 +1,21 @@
+{
+  "name": "flowcity-saude",
+  "version": "1.0.0",
+  "description": "Plataforma municipal de inteligência de fluxo hospitalar, tempo de espera por prioridade (PoW), ocupação (PoO), agora-casting e teletriagem com teleinterconsulta especializada.",
+  "author": "FlowCity Saúde Team",
+  "license": "MIT",
+  "scripts": {
+    "start": "npm run start --workspace=backend",
+    "dev": "concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
+    "build": "npm run build --workspace=backend && npm run build --workspace=frontend",
+    "test": "npm run test --workspace=backend",
+    "simulate": "npm run simulate --workspace=backend"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

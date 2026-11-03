@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  flowcity-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flowcity_saude_app
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://flowcity:flowcity2026@postgres:5432/flowcity_db
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: flowcity_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: flowcity_timescale
+    environment:
+      - POSTGRES_USER=flowcity
+      - POSTGRES_PASSWORD=flowcity2026
+      - POSTGRES_DB=flowcity_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:
