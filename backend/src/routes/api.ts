@@ -9,6 +9,7 @@ import { MonteCarloQueueSimulator } from '../engine/monteCarlo.js';
 import { ArrivalAnomalyDetector } from '../engine/anomaly.js';
 import { KAnonymityGuard } from '../services/privacy.js';
 import { PersistenceService } from '../services/persistence.js';
+import { buildFlowBundle, buildLocationBundle } from '../fhir/resources.js';
 
 export function createApiRouter(
   stateManager: StateManager,
@@ -48,6 +49,16 @@ export function createApiRouter(
     });
   });
 
+  router.get('/fhir/Location', (_req: Request, res: Response) => {
+    res.type('application/fhir+json').json(buildLocationBundle());
+  });
+
+  router.get('/fhir/Bundle', (_req: Request, res: Response) => {
+    const publicStates = stateManager.getAllStates().map((state) =>
+      KAnonymityGuard.sanitizeState(state, (payload) => stateManager.signPublicPayload(payload))
+    );
+    res.type('application/fhir+json').json(buildFlowBundle(publicStates));
+  });
   // 3. Snapshot de Todas as Unidades (PoW / PoO / Previsoes)
   router.get('/states', (_req: Request, res: Response) => {
     res.json({
