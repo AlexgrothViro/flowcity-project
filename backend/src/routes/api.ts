@@ -21,6 +21,9 @@ export function createApiRouter(
   const router = Router();
   const anomalyDetector = new ArrivalAnomalyDetector();
 
+  router.get('/health', (_req: Request, res: Response) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString(), uptime_seconds: Math.floor(process.uptime()), persistence: persistence?.driver ?? 'unavailable', data_mode: 'SYNTHETIC_DEMO' });
+  });
   // 1. Metadados e Unidades
   router.get('/units', (_req: Request, res: Response) => {
     res.json({
@@ -83,10 +86,20 @@ export function createApiRouter(
 
   // 5. Rota Inteligente Baseada em Haversine + Espera Atual
   router.post('/route', (req: Request, res: Response) => {
-    const { lat, lng, prioridade } = req.body;
-    const patientLat = Number(lat) || -29.6880; // Centro de Novo Hamburgo se nao fornecido
-    const patientLng = Number(lng) || -51.1300;
-    const prio: ManchesterPriority = prioridade || 'verde';
+    const schema = z.object({
+      lat: z.coerce.number().min(-90).max(90).optional(),
+      lng: z.coerce.number().min(-180).max(180).optional(),
+      prioridade: z.enum(['vermelho', 'laranja', 'amarelo', 'verde', 'azul']).optional()
+    }).strict();
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ erro: 'Parâmetros inválidos', detalhes: parsed.error.issues.map((issue) => ({ caminho: issue.path.join('.'), mensagem: issue.message })) });
+      return;
+    }
+    const { lat, lng, prioridade } = parsed.data;
+    const patientLat = lat ?? -29.6880;
+    const patientLng = lng ?? -51.1300;
+    const prio: ManchesterPriority = prioridade ?? 'verde';
 
     const recommendation = RoutingService.recommendUnit(
       patientLat,
@@ -137,8 +150,14 @@ export function createApiRouter(
   });
   // Scenario simulation is advisory and uses synthetic inputs only.
   router.post('/simulation/queue', (req: Request, res: Response) => {
+    const schema = z.object({ arrivalRatePerHour: z.number().min(0).max(10000), averageServiceMinutes: z.number().positive().max(1440), servers: z.number().int().min(1).max(500), queueCapacity: z.number().int().min(0).max(10000), durationMinutes: z.number().positive().max(1440), runs: z.number().int().min(1).max(5000).optional(), arrivalMultiplier: z.number().min(0).max(20).optional(), additionalServers: z.number().int().min(0).max(500).optional(), seed: z.number().int().optional() }).strict();
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ erro: 'Cenário inválido', detalhes: parsed.error.issues.map((issue) => ({ caminho: issue.path.join('.'), mensagem: issue.message })) });
+      return;
+    }
     try {
-      const result = MonteCarloQueueSimulator.simulate(req.body);
+      const result = MonteCarloQueueSimulator.simulate(parsed.data);
       res.json({ data_mode: 'SYNTHETIC_DEMO', result });
     } catch (error) {
       res.status(400).json({ erro: error instanceof Error ? error.message : 'Cenário inválido' });
@@ -239,7 +258,7 @@ export function createApiRouter(
 
   router.post('/telehealth/documents/verify', (req: Request, res: Response) => {
     const schema = z.object({
-      document: z.record(z.unknown()),
+      document: z.record(z.string(), z.unknown()),
       signature: z.string().regex(/^ed25519:[a-fA-F0-9]{128}$/),
       public_key_hex: z.string().regex(/^[a-fA-F0-9]{64}$/),
       sha256: z.string().regex(/^[a-fA-F0-9]{64}$/)

@@ -9,6 +9,7 @@ import { TelehealthView } from './views/TelehealthView.tsx';
 import { WhatsAppBotView } from './views/WhatsAppBotView.tsx';
 import { ApiDocsView } from './views/ApiDocsView.tsx';
 import { ShieldCheck, HeartHandshake } from 'lucide-react';
+import { AccessibilitySettings } from './components/AccessibilitySettings.tsx';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('citizen');
@@ -16,6 +17,15 @@ export const App: React.FC = () => {
   const [states, setStates] = useState<UnitLiveState[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentTelehealthId, setCurrentTelehealthId] = useState<string | undefined>(undefined);
+  const [highContrast, setHighContrast] = useState(() => localStorage.getItem('flowcity-high-contrast') === 'true');
+  const [fontScale, setFontScale] = useState<'normal' | 'large' | 'largest'>(() => (localStorage.getItem('flowcity-font-scale') as 'normal' | 'large' | 'largest') || 'normal');
+
+  useEffect(() => {
+    document.documentElement.dataset.contrast = highContrast ? 'high' : 'normal';
+    document.documentElement.dataset.fontScale = fontScale;
+    localStorage.setItem('flowcity-high-contrast', String(highContrast));
+    localStorage.setItem('flowcity-font-scale', fontScale);
+  }, [highContrast, fontScale]);
 
   useEffect(() => {
     async function init() {
@@ -49,15 +59,18 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      <a href="#main-content" className="skip-link">Pular para o conteúdo principal</a>
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         unitsCount={units.length}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <AccessibilitySettings contrast={highContrast} fontScale={fontScale} onContrastChange={setHighContrast} onFontScaleChange={setFontScale} />
+
+      <main id="main-content" tabIndex={-1} className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {loading ? (
-          <div className="flex flex-col items-center justify-center min-h-[400px] space-y-3">
+          <div role="status" aria-live="polite" className="flex flex-col items-center justify-center min-h-[400px] space-y-3">
             <div className="w-10 h-10 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin" />
             <p className="text-xs text-slate-500 font-semibold tracking-wide uppercase">
               Sincronizando com a rede municipal de Novo Hamburgo...

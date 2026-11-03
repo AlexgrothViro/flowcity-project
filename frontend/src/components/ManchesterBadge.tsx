@@ -61,6 +61,7 @@ export const ManchesterBadge: React.FC<ManchesterBadgeProps> = ({
   showDetails = false
 }) => {
   const config = MANCHESTER_CONFIG[priority];
+  const symbol: Record<ManchesterPriority, string> = { vermelho: '◆', laranja: '▲', amarelo: '●', verde: '■', azul: '◇' };
 
   return (
     <div
@@ -68,7 +69,7 @@ export const ManchesterBadge: React.FC<ManchesterBadgeProps> = ({
     >
       <div className="flex items-center gap-1.5">
         <span className={`w-2.5 h-2.5 rounded-full ${config.dot}`} />
-        <span>{config.label}</span>
+        <span><span aria-hidden="true" className="mr-1 font-black">{symbol[priority]}</span>{config.label}</span>
       </div>
 
       <div className="flex items-center gap-2 font-mono">

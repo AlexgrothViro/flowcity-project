@@ -45,7 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, unitsCo
           </div>
 
           {/* Navigation Tabs */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/60">
+          <nav aria-label="Navegação principal" className="hidden md:flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/60">
             <button
               onClick={() => setActiveTab('citizen')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
@@ -138,7 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, unitsCo
       </div>
 
       {/* Mobile Bar */}
-      <div className="md:hidden flex overflow-x-auto px-4 py-2 gap-2 border-t border-slate-100 bg-slate-50">
+      <nav aria-label="Navegação móvel" className="md:hidden flex overflow-x-auto px-4 py-2 gap-2 border-t border-slate-100 bg-slate-50">
         <button
           onClick={() => setActiveTab('citizen')}
           className={`px-3 py-1 text-xs rounded-lg whitespace-nowrap ${
@@ -187,7 +187,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, unitsCo
         >
           API
         </button>
-      </div>
+      </nav>
     </header>
   );
 };
