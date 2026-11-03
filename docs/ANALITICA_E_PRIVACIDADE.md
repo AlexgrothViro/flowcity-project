@@ -13,3 +13,8 @@ Contagens com valor zero são mantidas. A regra não transforma `null` em zero n
 
 ## Uso responsável
 A simulação não estima risco clínico individual, não escolhe prioridade de triagem e não substitui protocolo assistencial. Os resultados são cenários matemáticos para avaliação de capacidade, sem valor de decisão clínica.
+
+
+## Revisão de publicação antes de dados reais
+
+A supressão atual de pequenas células não demonstra anonimização. Totais, recortes e consultas sucessivas podem permitir deduções; avaliar conjuntamente REST, histórico, SSE, WebSocket, FHIR, exportação, rotas e previsões. A análise de risco e a política de publicação ainda precisam de aprovação institucional. Ver [dados e governança](planejamento/06_DADOS_ARQUITETURA_GOVERNANCA.md) e FC-005 no [backlog](planejamento/04_BACKLOG_PRIORIZADO.md).

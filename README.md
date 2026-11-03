@@ -70,7 +70,13 @@ npm run seed:synthetic --workspace=backend
 
 Essa operação grava 43.200 snapshots por unidade no banco configurado. Use uma base descartável de demonstração. Não execute contra uma base que contenha dados de produção.
 
+## Próxima etapa proposta
+
+Validar uma versão interna de observação de fluxo em uma unidade, com uma fonte autorizada e critérios de qualidade e uso. O plano de 16 semanas é uma proposta condicionada a parceiro, equipe e acesso. Veja [o estudo externo](docs/planejamento/01_ESTUDO_EXTERNO.md), [cronograma](docs/planejamento/03_ROADMAP_CRONOGRAMA.md) e [22 melhorias priorizadas](docs/planejamento/04_BACKLOG_PRIORIZADO.md).
+
 ## Documentação
+
+Comece pelo [índice central](docs/README.md), que distingue estado implementado, plano futuro e evidências.
 
 - [Status, épicos e limites conhecidos](docs/STATUS_DO_PROJETO.md)
 - [Persistência e histórico](docs/PERSISTENCIA_E_HISTORICO.md)

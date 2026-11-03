@@ -1,47 +1,27 @@
-# Diretrizes de Contribuição — FlowCity Saúde
+# Contribuir com FlowCity Saúde
 
-Agradecemos o interesse em contribuir com o **FlowCity Saúde**, um projeto dedicado a melhorar a eficiência, a transparência e o acesso no Sistema Único de Saúde (SUS).
+Comece pelo [índice documental](docs/README.md), [estado do protótipo](docs/STATUS_DO_PROJETO.md) e [backlog proposto](docs/planejamento/04_BACKLOG_PRIORIZADO.md).
 
----
+## Propor trabalho
 
-## 1. Princípios Não-Negociáveis do Projeto
+Descreva uma situação concreta, usuário, resultado esperado, evidência e critério de aceite. Distinguir hipótese, requisito futuro e comportamento já implementado. Use os modelos de issue de funcionalidade ou integração; não anexar credenciais, dados pessoais ou mensagens clínicas.
 
-1. **LGPD & Privacidade:**
-   * NUNCA adicione coleta, log ou armazenamento de Dados Pessoais Identificáveis (PII) nos módulos públicos de PoW e PoO.
-   * Não registre nomes, CPFs, números de prontuário ou endereços IP completos em logs de aplicação.
-2. **Integridade Matemática e Clínica:**
-   * Qualquer alteração no motor de filas ($M/M/c/K$), Filtro de Kalman ou curvas de sazonalidade deve vir acompanhada de testes unitários que comprovem a não-regressão.
-   * Os protocolos de teletriagem devem sempre manter a salvaguarda de *Red Flags* (encaminhamento imediato para atendimento presencial e SAMU 192 diante de risco iminente de morte).
-3. **Conformidade CFM:**
-   * O módulo de telemedicina deve respeitar a Resolução CFM nº 2.314/2022, exigindo registro de consentimento e suporte à assinatura digital ICP-Brasil.
+Não presumir parceria institucional, capacidade de unidade, benefício financeiro ou conformidade regulatória. Novas alegações precisam de fonte, data e limites.
 
----
+## Dados e software
 
-## 2. Fluxo de Desenvolvimento
+Manter exemplos sintéticos identificados. Não gravar nomes, CPF, CNS, prontuário ou texto sensível em logs e issues. A entrada de dados reais exige preparação institucional e acesso autorizado; ver [dados e governança](docs/planejamento/06_DADOS_ARQUITETURA_GOVERNANCA.md).
 
-### 2.1 Configuração do Ambiente
-```bash
-# Instalar dependências de todos os workspaces
-npm install
+O motor por prioridade é heurístico e a simulação é um componente separado; ver [modelo implementado](docs/MODELO_MATEMATICO.md). Alterações de comportamento exigem testes adequados ao risco, com entradas de borda relevantes, sem confundir teste do código com validação clínica.
 
-# Rodar a suíte de testes
-npm test
+## Entregar alterações
 
-# Executar em modo de desenvolvimento (Backend + Frontend)
-npm run dev
-```
+Usar commits descritivos, como docs, feat, fix e test. Explicar problema, mudança, evidência e limite. Para código, executar verificações apropriadas (por exemplo testes, compilação e auditoria se dependências mudarem). Para documentação, conferir links, fontes e coerência de escopo; não é necessário repetir a suíte de software por mudança apenas textual.
 
-### 2.2 Estrutura de Branches e Commits
-* Utilize a convenção de **Conventional Commits**:
-  * `feat: ...` para novas funcionalidades.
-  * `fix: ...` para correção de bugs.
-  * `docs: ...` para documentação.
-  * `test: ...` para testes unitários ou de integração.
+Novas rotas devem ter contrato reconciliado com a implementação e permissões especificadas. Atualizar PRD, backlog, cronograma e piloto juntos quando uma decisão mudar o escopo. Registrar alterações de modelos, parâmetros e definições de métricas com versão.
 
----
+## Ambiente
 
-## 3. Checklist para Pull Requests
-- [ ] O código passa no `npm test` com 100% de sucesso.
-- [ ] O código compila sem erros no TypeScript (`npm run build`).
-- [ ] Não há introdução de dependências pesadas ou vulnerabilidades (`npm audit`).
-- [ ] Novas rotas da API estão documentadas no `docs/openapi.yaml`.
+Comandos de instalação, desenvolvimento, testes e build estão no [README](README.md). Operação local em [manual](docs/MANUAL_OPERACIONAL_IMPLANTACAO.md).
+
+A licença do código não representa suporte ou autorização assistencial. Módulos clínicos futuros precisam de finalidade, responsáveis e avaliação próprias.

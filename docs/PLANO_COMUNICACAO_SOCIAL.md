@@ -1,44 +1,25 @@
-# FlowCity Saúde — Plano de Comunicação Social e Conscientização da População
+# Comunicação do projeto e de um possível piloto
 
-A eficácia do **FlowCity Saúde** depende do engajamento do cidadão. Para que a população mude o comportamento de buscar a UPA para qualquer queixa leve, a prefeitura deve comunicar com clareza, empatia e transparência.
+Revisão: 03/11/2026. Plano proposto. Não há campanha institucional, canal oficial de WhatsApp ou identidade municipal autorizados.
 
----
+## Mensagem para demonstração
 
-## 1. O Desafio Cultural: "Cheguei Primeiro, Por Que Fui Atendido Depois?"
+“FlowCity Saúde é um protótipo para estudar informação de fluxo e qualidade de dados. Os números desta demonstração são sintéticos. Estamos buscando validar um problema de gestão com uma unidade parceira.”
 
-O principal fator de conflito em recepções de pronto atendimento é a crença de que a ordem de atendimento deve ser cronológica (ordem de chegada), quando o SUS adota a **prioridade clínica de risco** (Protocolo de Manchester).
+Essa mensagem pode acompanhar o protótipo e reuniões exploratórias. Não usar brasão, logotipo, endosso ou nome de órgão como parceiro sem autorização.
 
-### O Conceito Central da Campanha
-> **"No SUS, a vida vem primeiro: quem tem mais urgência não pode esperar. E quem tem caso leve agora tem teleconsulta sem sair de casa."**
+## Informação que um piloto interno deve mostrar
 
----
+Fonte, horário de atualização, definição do indicador, população coberta e motivo de indisponibilidade. Diferenciar tempo observado de estimativa. Não transformar cor de prioridade em promessa de atendimento nem estimular abandono de fila ou transferência por conta própria.
 
-## 2. Pilares da Estratégia de Comunicação
+## Antes de comunicação ao cidadão
 
-### Pilar 1: Pedagogia das Cores de Manchester (Transparência nos Totens)
-* **Objetivo:** Explicar de forma visual e simples o que significa cada cor:
-  * 🔴 **Vermelho:** Risco imediato de morte (parada cardíaca, choque, politrauma grave). Atendimento em 0 minutos na Sala Vermelha.
-  * 🟠 **Laranja:** Muito urgente (dor forte no peito, suspeita de AVC). Atendimento em até 10 minutos.
-  * 🟡 **Amarelo:** Urgente com necessidade de exames rápidos. Atendimento em até 60 minutos.
-  * 🟢 **Verde:** Pouco urgente (resfriado, dor de garganta, queixas leves). Espera prolongada na UPA, mas **atendimento rápido na UBS ou por Teleconsulta**.
-  * 🔵 **Azul:** Não urgente (renovação de receita, queixas crônicas). Atendimento na Atenção Básica.
+Pactuar conteúdo com a gestão, testar compreensão com públicos diversos, medir acessibilidade e validar horários/serviços da rede. Incluir canais não digitais; prever atualização, suspensão e responsável por correção. Seguir [a política de dados](planejamento/06_DADOS_ARQUITETURA_GOVERNANCA.md).
 
-### Pilar 2: Divulgação do Canal de WhatsApp (Zero Atrito)
-* A grande massa da população não deseja baixar novos aplicativos com logins complexos.
-* O canal oficial de WhatsApp do FlowCity Saúde permite:
-  * Consultar a fila da UPA antes de sair de casa digitando *"Fila"*.
-  * Fazer a teletriagem digitando *"Estou com febre"*.
-  * Receber o link da teleconsulta em 30 segundos.
+Para uma futura página pública, começar por informação institucional confirmada e atualização, avaliando separadamente a conveniência de divulgar espera. Não anunciar teleconsulta imediata, receita digital ou economia de tempo sem serviço e evidência correspondentes.
 
-### Pilar 3: Sinalização Física em Unidades de Saúde
-* **Adesivos com QR Code:** Colocados nas cadeiras de espera da UPA Canudos e HMNH: *"Cansado de esperar? Se você foi classificado como Verde ou Azul, abra sua câmera e consulte um médico agora por Teleconsulta."*
-* **Cartazes Didáticos:** Fixados ao lado do Totem Digital com infográficos comparando o tempo de espera da UPA (ex.: 70 min) contra a UBS próxima (ex.: 15 min).
+## Perguntas para teste de entendimento
 
----
+“O que esse número quer dizer?”, “Quando foi atualizado?”, “O que você faria se estivesse indisponível?” e “Isso garante o seu horário?”. Se a resposta sugerir decisão inadequada, redesenhar a mensagem antes de publicar.
 
-## 3. Roteiro de Vídeo Institucional para Redes Sociais (60 segundos)
-
-* **[00s - 15s] A Dor:** Cena de uma mãe com o filho na recepção cheia da UPA. Locução: *"Você já precisou de atendimento médico e perdeu horas sem saber quando seria chamado?"*
-* **[15s - 30s] A Solução:** Mostra o celular abrindo o WhatsApp do FlowCity Saúde. *"Agora em Novo Hamburgo você tem o FlowCity Saúde. Pelo celular, você vê em tempo real o tempo de espera da UPA Canudos e do Hospital Municipal."*
-* **[30s - 45s] A Rota Inteligente e Teleconsulta:** Mostra a rota para a USF Santo Afonso e o médico de família atendendo por vídeo. *"Se for um caso leve, o sistema indica a UBS mais rápida perto de você ou abre uma teleconsulta na hora com receita digital no seu WhatsApp."*
-* **[45s - 60s] Encerramento:** Logotipos da Prefeitura de Novo Hamburgo, FSNH e FlowCity Saúde. *"FlowCity Saúde: a rede que flui, com você no centro do cuidado."*
+Rotular todo material como demonstração, proposta ou serviço validado, conforme seu estado real. Guardar a versão e a aprovação institucional de cada comunicação futura.

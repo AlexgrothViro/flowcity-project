@@ -17,8 +17,13 @@ Estes recursos são uma base de acessibilidade e não equivalem a uma auditoria 
 - O corpo JSON tem limite de 256 KB.
 - Zod valida coordenadas e prioridades de rota, cenários de simulação e documentos recebidos. Erros de entrada retornam HTTP 400 com os campos inválidos.
 - `GET /api/v0/health` retorna status, horário, tempo de processo, driver de persistência e o rótulo `SYNTHETIC_DEMO`; não é uma verificação de disponibilidade externa ou de conexão com banco.
-- Zod foi atualizado para a versão corrigida após a auditoria reportar uma vulnerabilidade alta. `npm audit` concluiu sem vulnerabilidades.
+- Zod foi atualizado para a versão corrigida após a auditoria reportar uma vulnerabilidade alta. `npm audit` concluiu sem vulnerabilidades na validação de software anterior a esta revisão documental. Isso não é uma auditoria de segurança institucional.
 
 ## Limites de operação
 
 Os dados de demonstração não são dados operacionais nem devem orientar atendimento. Antes de uso institucional, configure TLS e origens CORS, proteção compartilhada de limite em ambiente distribuído, uma CSP compatível com os recursos escolhidos e auditoria de acessibilidade completa.
+
+
+## Evolução planejada
+
+Os controles atuais não incluem autenticação/autorização completa por instituição. Prioridades de acesso, ingestão e publicação estão no [backlog](planejamento/04_BACKLOG_PRIORIZADO.md). Para interface, planejar avaliação contra critérios WCAG 2.2 pertinentes, com tarefas e componentes de terceiros; a meta e o escopo de conformidade devem ser explicitamente pactuados.

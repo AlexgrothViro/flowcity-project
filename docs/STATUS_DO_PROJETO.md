@@ -4,6 +4,10 @@
 
 Este documento descreve o estado do código, não uma implantação. A configuração e os dados do protótipo são sintéticos; não há operação municipal conectada.
 
+## Planejamento após o protótipo
+
+Revisão documental de 03/11/2026: os oito épicos descrevem a entrega de um protótipo, não prontidão para operação assistencial. A próxima etapa proposta está no [PRD](planejamento/02_PRD_FLOWCITY.md), com [cronograma](planejamento/03_ROADMAP_CRONOGRAMA.md), [backlog](planejamento/04_BACKLOG_PRIORIZADO.md) e [critérios de piloto](planejamento/05_PILOTO_E_METRICAS.md). A validação de 37 testes citada aqui é a anterior a esta revisão; não houve nova execução de software na etapa exclusivamente documental.
+
 ## Épicos concluídos
 
 1. **Persistência:** SQLite em modo WAL, opção de PostgreSQL, eventos de fluxo de trabalho, auditoria append-only e consulta de snapshots históricos.

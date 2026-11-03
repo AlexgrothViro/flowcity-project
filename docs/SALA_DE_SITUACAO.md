@@ -12,10 +12,15 @@ A linha histórica mostra espera amarela. As projeções de +15, +30 e +60 minut
 
 ## What-if
 
-POST /api/v0/simulation/queue executa comparação Monte Carlo com hipóteses de chegada Poisson e atendimento exponencial. A tela compara cenário base e cenário configurado, exibindo espera média, percentil 95, comprimento médio de fila e taxa de rejeição.
+POST /api/v0/simulation/queue executa comparação Monte Carlo com hipóteses de chegada Poisson e atendimento exponencial. A tela compara cenário base e cenário configurado, exibindo espera média, P95 das médias entre execuções, comprimento médio de fila e taxa de rejeição. Esse P95 não é o tempo de 95% dos pacientes nem um intervalo de previsão individual.
 
 O controle de chegadas de ambulância apenas aumenta hipoteticamente a taxa total de chegadas; não representa GPS, dados de SAMU ou tempos de atendimento específicos. O número de equipe adicional representa servidores equivalentes no modelo. Não há custo municipal configurado, portanto o painel não calcula economia financeira.
 
 ## Boletim
 
 JSON inclui estado agregado, histórico visível e cenário simulado. CSV contém os pontos da série histórica. A impressão usa a visualização atual do painel. Os arquivos são demonstrações e não prestação oficial de contas.
+
+
+## Próxima validação
+
+As estimativas por prioridade são heurísticas e o histórico sintético não é mediana empírica de pacientes. Consultar [modelo implementado](MODELO_MATEMATICO.md) e [plano de avaliação](planejamento/05_PILOTO_E_METRICAS.md) antes de comparar resultados com um serviço real.

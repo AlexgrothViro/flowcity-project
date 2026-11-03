@@ -1,54 +1,17 @@
-# FlowCity Saúde — Conformidade com a Resolução CFM nº 2.314/2022 & Protocolos de Teleinterconsulta
+# Telessaúde — escopo demonstrativo e preparação futura
 
-Este documento estabelece as diretrizes normativas e operacionais para os módulos de **Teletriagem**, **Teleconsulta da Atenção Primária** e **Teleinterconsulta com Especialistas** no âmbito da rede pública municipal de saúde.
+Revisão: 03/11/2026. O protótipo possui formulários de SOAP e apoio documental. Não presta teleconsulta, não abre serviço real de vídeo e não emite receitas ou atestados. [Descrição implementada](TELESSAUDE_E_REGULACAO.md).
 
----
+## Caso uma linha clínica seja proposta
 
-## 1. Enquadramento Normativo (Resolução CFM nº 2.314/2022)
+Definir finalidade, serviço responsável, profissionais habilitados, identidade, consentimento quando aplicável, acesso, prontuário, segurança, encaminhamento, suporte, responsabilidades e contingência. Avaliar parceria com serviço existente antes de construir todo o serviço.
 
-A Resolução CFM nº 2.314/2022 define as modalidades de telemedicina no Brasil:
+Triagem automática por sintomas e encaminhamento assistencial não devem ser tratados como simples extensão de uma tela. Rever riscos, finalidade e enquadramento regulatório; a aprovação de um piloto de gestão não autoriza serviço clínico.
 
-1. **Teletriagem Médica (Art. 7º):** Avaliação prévia de sintomas com classificação de risco clínico, determinando a urgência do atendimento ou o direcionamento para o nível de atenção mais adequado.
-2. **Teleconsulta (Art. 5º):** Consulta médica remota realizada entre médico e paciente mediada por tecnologias de comunicação síncronas (áudio e vídeo).
-3. **Teleinterconsulta (Art. 6º):** Troca de informações e opiniões entre médicos (médico assistente e médico especialista), com ou sem a presença do paciente, para auxílio diagnóstico ou terapêutico.
-4. **Telemonitoramento (Art. 8º):** Acompanhamento à distância de parâmetros de saúde e doença sob supervisão médica.
+## Referências
 
----
+- [Lei 14.510, de 27/12/2022](https://www2.camara.leg.br/legin/fed/lei/2022/lei-14510-27-dezembro-2022-793576-publicacaooriginal-166678-pl.html): o ano correto é 2022.
+- [Resolução CFM 2.314/2022](https://www.sistemas.cfm.org.br/normas/visualizar/resolucoes/BR/2022/2314): referência de telemedicina, a conferir no escopo concreto.
+- [Anvisa — orientação SaMD](https://www.gov.br/anvisa/pt-br/centraisdeconteudo/publicacoes/produtos-para-a-saude/manuais/software-como-dispositivo-medico-perguntas-e-respostas): apoiar análise de finalidade pretendida, sem classificação automática nesta documentação.
 
-## 2. Fluxo Clínico Integrado no FlowCity Saúde
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Cidadao as Paciente (App/Whats)
-    participant Triage as Teletriagem FlowCity
-    participant MFC as Médico MFC (APS)
-    participant Spec as Especialista Focal (Cardio/Derma/Orto)
-    participant SISREG as Regulação SISREG Municipal
-
-    Cidadao->>Triage: Relata sintomas e responde perguntas red-flag
-    alt Sinais de Emergência (Vermelho / Laranja)
-        Triage-->>Cidadao: Bloqueia teleconsulta. Indica rota HMNH/UPA Canudos ou aciona SAMU 192.
-    else Casos Leves a Moderados (Verde / Azul)
-        Triage-->>Cidadao: Oferece Teleconsulta imediata ou agendada na APS
-        Cidadao->>MFC: Entra na Sala WebRTC com Médico de Família
-        MFC->>Cidadao: Atendimento clínico e exame orientado
-        alt Resolvido na APS (80% dos casos)
-            MFC->>Cidadao: Emite Receita Digital / Atestado ICP-Brasil
-        else Necessidade de Especialista Focal
-            MFC->>Spec: Aciona Teleinterconsulta (síncrona ou assíncrona)
-            Spec->>MFC: Emite parecer especializado e ajuste de conduta
-            opt Encaminhamento Presencial Inevitável
-                Spec->>SISREG: Cadastra encaminhamento qualificado com prioridade
-            end
-        end
-    end
-```
-
----
-
-## 3. Diretrizes de Segurança e Prontuário Eletrônico
-
-* **Consentimento Esclarecido:** O paciente registra consentimento eletrônico explícito antes de entrar na sala de teleconsulta.
-* **Assinatura Digital:** Todas as receitas, atestados e pareceres especializados são assinados utilizando certificados digitais no padrão da Infraestrutura de Chaves Públicas Brasileira (**ICP-Brasil**).
-* **Guarda de Registros:** Os dados da teleconsulta são integrados ao prontuário eletrônico do e-SUS PEC ou HIS municipal, atendendo ao prazo de guarda mínimo de 20 anos estabelecido na Lei nº 13.787/2018.
+Nenhum documento deste repositório comprova conformidade CFM, prontuário integrado, guarda institucional ou emissão ICP-Brasil. Não há taxa de resolubilidade ou percentual de redução de encaminhamentos medidos pelo FlowCity.

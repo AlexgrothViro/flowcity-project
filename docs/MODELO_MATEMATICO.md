@@ -1,70 +1,37 @@
-# FlowCity Saúde — Modelo Matemático de Filas e Agora-Casting
+# Modelos implementados e limites de interpretação
 
-Este documento formaliza a modelagem estocástica e os algoritmos de previsão que compõem o núcleo analítico do **FlowCity Saúde**.
+Revisão: 03/11/2026. Esta descrição substitui a formulação anterior que apresentava uma solução teórica como se estivesse integralmente implementada. Base: leitura de código em 67ff4a5.
 
----
+## Estimativa por prioridade
 
-## 1. Fila de Prioridades Não-Preemptiva ($M/M/c/K$)
+[ManchesterQueuingModel](../backend/src/engine/queuing.ts) calcula uma heurística com contagem em fila, salas ativas e tempo médio de consulta. Usa ao menos uma sala para evitar divisão por zero. Vermelho recebe espera zero no modelo demonstrativo; isso não mede nem garante atendimento imediato real.
 
-O fluxo de pacientes em um pronto atendimento segue chegadas poissonianas com taxas de chegada $\lambda_p$ distintas para cada uma das classes de prioridade $p \in \{1, 2, 3, 4, 5\}$ correspondentes ao Protocolo de Manchester:
+Para cada prioridade seguinte, calcula aproximadamente:
 
-* $p=1$: Vermelho (Emergência absoluta)
-* $p=2$: Laranja (Muito urgente)
-* $p=3$: Amarelo (Urgente)
-* $p=4$: Verde (Pouco urgente)
-* $p=5$: Azul (Não urgente)
+**espera = arredondar(atraso acumulado das prioridades anteriores + 0,75 × contagem da prioridade × tempo médio de consulta / salas).**
 
-### 1.1 Taxas de Serviço e Intensidade de Tráfego
+O atraso acumulado cresce com o tempo de drenagem das classes anteriores. O campo chamado wait_med_min não é, por isso, uma mediana empírica observada. A confiança é uma regra predefinida, com penalidade por idade do dado; não foi calibrada com resultados reais.
 
-Seja $c$ o número de consultórios médicos em atendimento ativo e $\mu$ a taxa de atendimento por consultório. A intensidade de tráfego parcial para as primeiras $p$ classes é definida por:
+Esse método não é uma solução exata de fila multiclasses M/M/c/K. Taxas de chegada declaradas na interface do modelo não devem ser interpretadas como parâmetros estimados e usados em toda a fórmula. Para uso real, definir alvo, comparar com referências e medir erro.
 
-$$\sigma_p = \sum_{i=1}^p \rho_i = \sum_{i=1}^p \frac{\lambda_i}{c \mu}$$
+## Monte Carlo de cenários
 
-Para que o sistema seja estável em regime estacionário, é necessário que $\sigma_5 < 1$. Em períodos de pico transitório ($\sigma_5 \ge 1$), o modelo comuta para a solução transiente com horizonte finito $K$.
+[MonteCarloQueueSimulator](../backend/src/engine/monteCarlo.ts) é uma simulação de eventos discretos, com chegadas e serviços exponenciais, vários servidores e fila de capacidade finita. É separado da heurística por prioridade e não simula suas cinco classes clínicas.
 
-### 1.2 Tempo Médio de Espera por Prioridade ($W_q^{(p)}$)
+A capacidade informada é a da fila aguardando; a capacidade total em serviço mais espera inclui os servidores. Usa semente para repetibilidade e limites de volume/duração. Distribuições e parâmetros são suposições do cenário, sem calibração institucional.
 
-No regime de prioridade não-preemptiva (onde um médico não interrompe a consulta de um paciente em andamento, exceto na chegada de um caso Vermelho), o tempo médio de espera na fila para um paciente da prioridade $p$ é dado por:
+O P95 das médias entre execuções não é o percentil do tempo de cada paciente, nem um intervalo de previsão clínica validado. Reportar rejeição e volume atendido junto com espera; excluir chegadas por capacidade pode alterar a média observada.
 
-$$W_q^{(1)} \approx 0 \quad (\text{encaminhamento direto à sala de estabilização})$$
+## Kalman e projeção de curto prazo
 
-$$W_q^{(p)} = \frac{W_0}{(1 - \sigma_{p-1})(1 - \sigma_p)}, \quad \forall p \in \{2, 3, 4, 5\}$$
+[KalmanFilter1D](../backend/src/engine/kalman.ts) suaviza séries segundo parâmetros definidos no código. [NowcastingEngine](../backend/src/engine/nowcasting.ts) usa pesos horários fixos para gerar deltas e constantes de confiança por horizonte.
 
-onde $W_0$ é o atraso médio residual:
+Os deltas atuais são determinados pela relação entre pesos horários; não representam um modelo treinado com histórico local. Embora receba medidas suavizadas, a fórmula dos deltas não utiliza diretamente seus valores para estimar a tendência. Os pesos não devem ser chamados de curva empírica validada de UPAs brasileiras.
 
-$$W_0 = \sum_{i=1}^5 \frac{\lambda_i E[S_i^2]}{2 c} = \sum_{i=1}^5 \frac{\rho_i}{\mu_i}$$
+O uso de horário do processo exige revisão de fuso em implantação. Intervalos gráficos demonstrativos não constituem cobertura probabilística comprovada.
 
----
+## Como evoluir
 
-## 2. Filtro de Kalman Unidimensional e Suavização
+Construir indicadores observados de eventos autorizados; preservar diferenças entre média, mediana, tempo de espera atual e previsão; validar distribuição de chegada/serviço; avaliar temporalmente contra persistência e mediana histórica. Conferir estabilidade por período, pico e grupos com amostra suficiente. [Plano de avaliação](planejamento/05_PILOTO_E_METRICAS.md).
 
-Para eliminar o ruído estocástico decorrente de carimbos de data/hora irregulares nos sistemas de prontuário eletrônico (HIS e e-SUS PEC), aplicamos um Filtro de Kalman 1D contínuo:
-
-1. **Predição do Estado:**
-   $$x_{k|k-1} = x_{k-1}$$
-   $$P_{k|k-1} = P_{k-1} + Q$$
-   onde $Q$ é a variância do ruído do processo de chegada hospitalar.
-
-2. **Ganho de Kalman:**
-   $$K_k = \frac{P_{k|k-1}}{P_{k|k-1} + R}$$
-   onde $R$ é a variância do ruído de medição do sistema.
-
-3. **Atualização da Estimativa:**
-   $$x_k = x_{k|k-1} + K_k (z_k - x_{k|k-1})$$
-   $$P_k = (1 - K_k) P_{k|k-1}$$
-
----
-
-## 3. Agora-Casting (15, 30 e 60 minutos) com Sazonalidade Intraday
-
-O modelo combina o estado suavizado $x_k$ com a derivada da curva sazonal empírica de UPAs brasileiras:
-
-$$S(h), \quad h \in [0, 23]$$
-
-A projeção de variação para um horizonte futuro $\Delta t \in \{15, 30, 60\}$ minutos é dada por:
-
-$$\Delta PoW = \alpha \cdot \frac{S(h + \Delta t) - S(h)}{S(h)}$$
-
-$$\Delta PoO = \beta \cdot \frac{S(h + \Delta t) - S(h)}{S(h)}$$
-
-onde $\alpha = 0.65$ e $\beta = 0.40$ são os fatores de amortecimento calibrados empiricamente.
+Não confundir testes que verificam o algoritmo com validação dos pressupostos ou da utilidade no serviço.

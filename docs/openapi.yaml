@@ -1,19 +1,18 @@
 openapi: 3.0.3
 info:
-  title: FlowCity Saúde — API Aberta Municipal
+  title: FlowCity Saúde — API do protótipo demonstrativo
   description: >
-    Plataforma municipal de inteligência de fluxo hospitalar, tempo de espera por prioridade (PoW),
-    ocupação de salas/leitos (PoO), agora-casting (15–60 min) e teletriagem com teleinterconsulta.
-    Todos os dados públicos são agregados, sem PII (LGPD by design) e assinados digitalmente com Ed25519.
+    Documento parcial de um protótipo com dados sintéticos, sem vínculo institucional ou servidor público oficial.
+    Não representa homologação ou conformidade regulatória. A lista de rotas e os esquemas ainda precisam
+    de reconciliação com o código, conforme FC-007 e FC-015 no backlog documental.
+    A assinatura Ed25519 demonstra integridade; não comprova identidade institucional do emissor.
   version: 1.0.0
   contact:
-    name: Equipe Técnica FlowCity Saúde
-    email: contato@flowcity.saude.gov.br
+    name: Projeto FlowCity Saúde
+x-documentation-status: prototype-partial
 servers:
   - url: http://localhost:3001/api/v0
-    description: Servidor de Desenvolvimento e Homologação
-  - url: https://api.flowcity.saude.novohamburgo.rs.gov.br/api/v0
-    description: Servidor de Produção Piloto (Novo Hamburgo - RS)
+    description: Demonstração local; não é ambiente homologado institucionalmente
 
 paths:
   /units:
