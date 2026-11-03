@@ -2,7 +2,7 @@ export type ManchesterPriority = 'vermelho' | 'laranja' | 'amarelo' | 'verde' | 
 
 export interface PriorityMetrics {
   fila: number | null;
-  wait_med_min: number;
+  wait_med_min: number | null;
   conf: number;
   pacientes_hora?: number;
 }

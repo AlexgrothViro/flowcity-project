@@ -3,7 +3,7 @@ import { ManchesterPriority } from '../types.ts';
 
 interface ManchesterBadgeProps {
   priority: ManchesterPriority;
-  waitMinutes?: number;
+  waitMinutes?: number | null;
   count?: number | null;
   showDetails?: boolean;
 }
@@ -79,7 +79,7 @@ export const ManchesterBadge: React.FC<ManchesterBadgeProps> = ({
         )}
         {waitMinutes !== undefined && (
           <span className="font-extrabold text-[12px]">
-            {waitMinutes === 0 ? '0 min' : `~${waitMinutes} min`}
+{waitMinutes === null ? 'Indisponível' : waitMinutes === 0 ? '0 min' : '~' + waitMinutes + ' min'}
           </span>
         )}
       </div>

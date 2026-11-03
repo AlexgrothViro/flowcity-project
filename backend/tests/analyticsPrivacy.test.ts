@@ -81,8 +81,11 @@ test('public sanitized state is signed after small queue counts are hidden', () 
   } as unknown as UnitLiveState;
   const result = KAnonymityGuard.sanitizeState(state, (payload) => signer.signPayload(payload));
   assert.equal(result.pow.prioridades.vermelho.fila, null);
+  assert.equal(result.pow.prioridades.vermelho.wait_med_min, null);
   assert.equal(result.pow.prioridades.laranja.fila, null);
+  assert.equal(result.pow.prioridades.laranja.wait_med_min, null);
   assert.equal(result.pow.prioridades.amarelo.fila, 3);
+  assert.equal(result.pow.prioridades.amarelo.wait_med_min, 10);
   assert.equal(result.pow.prioridades.verde.fila, 0);
   const { assinatura, ...unsigned } = result;
   assert.equal(SignerService.verifySignature(unsigned, assinatura, signer.getPublicKey()), true);

@@ -23,6 +23,59 @@ export async function fetchStates(): Promise<{ timestamp: string; unidades: Unit
   return res.json();
 }
 
+export interface WaitHistoryPoint {
+  captured_at: string;
+  wait_yellow_minutes: number | null;
+  yellow_count: number | null;
+  data_mode: string;
+}
+
+export async function fetchWaitHistory(unitId: string, hours = 24): Promise<{
+  unit_id: string;
+  hours: number;
+  k: number;
+  count: number;
+  data_mode: string;
+  points: WaitHistoryPoint[];
+}> {
+  const query = new URLSearchParams({ unitId, hours: String(hours) });
+  const res = await fetch(`${API_BASE}/history/wait-times?${query.toString()}`);
+  if (!res.ok) throw new Error('Falha ao carregar histórico de espera');
+  return res.json();
+}
+
+export interface QueueScenarioInput {
+  arrivalRatePerHour: number;
+  averageServiceMinutes: number;
+  servers: number;
+  queueCapacity: number;
+  durationMinutes: number;
+  runs: number;
+  arrivalMultiplier: number;
+  additionalServers: number;
+  seed: number;
+}
+
+export interface QueueScenarioOutput {
+  runs: number;
+  meanWaitMinutes: number;
+  p95MeanWaitMinutes: number;
+  meanQueueLength: number;
+  rejectionRate: number;
+  servedPerHour: number;
+}
+
+export async function simulateQueueScenario(scenario: QueueScenarioInput): Promise<QueueScenarioOutput> {
+  const res = await fetch(`${API_BASE}/simulation/queue`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(scenario)
+  });
+  if (!res.ok) throw new Error('Cenário inválido para o simulador');
+  const data = await res.json();
+  return data.result;
+}
+
 export async function fetchMetrics(): Promise<any> {
   const res = await fetch(`${API_BASE}/system/metrics`);
   if (!res.ok) throw new Error('Falha ao carregar metricas');

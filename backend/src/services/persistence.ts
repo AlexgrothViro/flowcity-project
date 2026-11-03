@@ -151,6 +151,27 @@ export class PersistenceService {
     });
     transaction?.(snapshots);
   }
+  public async loadSnapshotHistory(unitId: string, hours = 24): Promise<UnitLiveState[]> {
+    await this.ready;
+    if (!Number.isInteger(hours) || hours < 1 || hours > 168) {
+      throw new Error('hours must be between 1 and 168');
+    }
+    const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+    if (this.mode === 'postgres' && this.pool) {
+      const result = await this.pool.query(
+        'SELECT payload_json FROM unit_snapshots WHERE unit_id = $1 AND captured_at >= $2 ORDER BY captured_at ASC',
+        [unitId, since]
+      );
+      return result.rows.map((row) =>
+        typeof row.payload_json === 'string' ? JSON.parse(row.payload_json) as UnitLiveState : row.payload_json as UnitLiveState
+      );
+    }
+    const rows = this.sqlite?.prepare(
+      'SELECT payload_json FROM unit_snapshots WHERE unit_id = ? AND captured_at >= ? ORDER BY captured_at ASC'
+    ).all(unitId, since) as Array<{ payload_json: string }> | undefined;
+    return (rows || []).map((row) => JSON.parse(row.payload_json) as UnitLiveState);
+  }
+
   public async loadLatestSnapshots(): Promise<UnitLiveState[]> {
     await this.ready;
     if (this.mode === 'postgres' && this.pool) {

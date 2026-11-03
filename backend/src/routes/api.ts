@@ -98,6 +98,43 @@ export function createApiRouter(
     res.json(recommendation);
   });
 
+  router.get('/history/wait-times', async (req: Request, res: Response) => {
+    const unitId = typeof req.query.unitId === 'string' ? req.query.unitId : 'upa_canudos';
+    const hoursRaw = typeof req.query.hours === 'string' ? Number(req.query.hours) : 24;
+    const hours = Number.isInteger(hoursRaw) ? Math.max(1, Math.min(24, hoursRaw)) : 24;
+    if (!NOVO_HAMBURGO_UNITS.some((unit) => unit.id === unitId)) {
+      res.status(400).json({ erro: 'Unidade inválida' });
+      return;
+    }
+    if (!persistence) {
+      res.status(503).json({ erro: 'Histórico persistido indisponível' });
+      return;
+    }
+    try {
+      const snapshots = await persistence.loadSnapshotHistory(unitId, hours);
+      const points = snapshots.map((snapshot) => {
+        const sanitized = KAnonymityGuard.sanitizeState(snapshot, (payload) => stateManager.signPublicPayload(payload));
+        const yellow = sanitized.pow.prioridades.amarelo;
+        const suppressed = yellow.fila === null;
+        return {
+          captured_at: sanitized.timestamp,
+          wait_yellow_minutes: suppressed ? null : yellow.wait_med_min,
+          yellow_count: yellow.fila,
+          data_mode: sanitized.data_mode ?? 'SYNTHETIC_DEMO'
+        };
+      });
+      res.json({
+        unit_id: unitId,
+        hours,
+        k: KAnonymityGuard.MIN_GROUP_SIZE,
+        count: points.length,
+        data_mode: 'SYNTHETIC_DEMO',
+        points
+      });
+    } catch (error) {
+      res.status(503).json({ erro: error instanceof Error ? error.message : 'Falha ao ler histórico' });
+    }
+  });
   // Scenario simulation is advisory and uses synthetic inputs only.
   router.post('/simulation/queue', (req: Request, res: Response) => {
     try {
@@ -303,22 +340,23 @@ export function createApiRouter(
   // 11. Metricas Globais da Rede (Regulacao e SAMU)
   router.get('/system/metrics', (_req: Request, res: Response) => {
     const states = stateManager.getAllStates();
-    const totalQueue = states.reduce((sum, s) => sum + s.pow.total_em_fila, 0);
-    const avgWaitAmarelo = Math.round(
-      states.reduce((sum, s) => sum + s.pow.prioridades.amarelo.wait_med_min, 0) / states.length
-    );
-    const totalAmbulanciasRetidas = states.reduce((sum, s) => sum + s.samu.ambulancias_retidas, 0);
-
+    const totalQueue = states.reduce((sum, state) => sum + state.pow.total_em_fila, 0);
+    const contributingStates = states.filter((state) => state.pow.prioridades.amarelo.fila >= KAnonymityGuard.MIN_GROUP_SIZE);
+    const averageYellowWait = contributingStates.length
+      ? Math.round(contributingStates.reduce((sum, state) => sum + state.pow.prioridades.amarelo.wait_med_min, 0) / contributingStates.length)
+      : null;
+    const retainedAmbulances = KAnonymityGuard.suppress(states.reduce((sum, state) => sum + state.samu.ambulancias_retidas, 0));
+    const averageRoomsOccupancy = states.length
+      ? states.reduce((sum, state) => sum + state.poo.ocupacao_salas, 0) / states.length
+      : 0;
     res.json({
       cidade: 'Novo Hamburgo - RS',
       total_unidades_ativas: states.length,
-      total_pacientes_em_fila: totalQueue,
-      tempo_medio_amarelo_rede_min: avgWaitAmarelo,
-      ambulancias_samu_retidas: totalAmbulanciasRetidas,
-      unidade_mais_sobrecarregada: 'hmnh_hospital',
-      unidade_mais_livre: 'usf_canudos',
-      indice_balanceamento_rede: 0.74,
-      recomendacao_operacional: 'Redirecionar casos Verde/Azul da UPA Canudos para a USF Santo Afonso e polo de teleconsulta.'
+      total_pacientes_em_fila: KAnonymityGuard.suppress(totalQueue),
+      tempo_medio_amarelo_rede_min: averageYellowWait,
+      ambulancias_samu_retidas: retainedAmbulances,
+      ocupacao_media_salas: averageRoomsOccupancy,
+      data_mode: 'SYNTHETIC_DEMO'
     });
   });
 

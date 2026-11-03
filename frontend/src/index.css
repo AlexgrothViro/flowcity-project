@@ -27,3 +27,9 @@ body {
     height: 340px;
   }
 }
+
+@media print {
+  .print-hidden { display: none !important; }
+  section { break-inside: avoid; }
+  body { background: white !important; }
+}

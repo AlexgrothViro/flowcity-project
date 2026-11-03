@@ -1,7 +1,7 @@
 import type { ManchesterPriority, UnitLiveState, UnitDiagnosticStatus, UnitObservationBeds, PriorityMetrics } from '../types.js';
 
 type PublicCount = number | null;
-type PublicPriorityMetrics = Omit<PriorityMetrics, 'fila'> & { fila: PublicCount; contagem_suprimida?: true };
+type PublicPriorityMetrics = Omit<PriorityMetrics, 'fila' | 'wait_med_min'> & { fila: PublicCount; wait_med_min: number | null; contagem_suprimida?: true };
 type PublicDiagnosticStatus = Omit<UnitDiagnosticStatus, 'raio_x' | 'laboratorio'> & {
   raio_x: Omit<UnitDiagnosticStatus['raio_x'], 'fila_exames'> & { fila_exames: PublicCount; contagem_suprimida?: true };
   laboratorio: Omit<UnitDiagnosticStatus['laboratorio'], 'fila_exames'> & { fila_exames: PublicCount; contagem_suprimida?: true };
@@ -41,7 +41,7 @@ export class KAnonymityGuard {
     const priorities = Object.fromEntries(
       Object.entries(copy.pow.prioridades).map(([priority, metrics]) => {
         const fila = this.suppress(metrics.fila);
-        return [priority, { ...metrics, fila, ...(fila === null ? { contagem_suprimida: true as const } : {}) }];
+        return [priority, { ...metrics, fila, wait_med_min: fila === null ? null : metrics.wait_med_min, ...(fila === null ? { contagem_suprimida: true as const } : {}) }];
       })
     ) as Record<ManchesterPriority, PublicPriorityMetrics>;
     const total = this.suppress(copy.pow.total_em_fila);

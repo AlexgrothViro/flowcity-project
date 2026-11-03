@@ -8,6 +8,7 @@ import { StateManager } from './services/stateManager.js';
 import { TelehealthService } from './services/telehealth.js';
 import { createApiRouter } from './routes/api.js';
 import { PersistenceService } from './services/persistence.js';
+import { KAnonymityGuard } from './services/privacy.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,6 +23,7 @@ app.use(express.json());
 const persistence = new PersistenceService();
 const stateManager = new StateManager(persistence);
 const telehealthService = new TelehealthService(persistence);
+const getPublicStates = () => stateManager.getAllStates().map((state) => KAnonymityGuard.sanitizeState(state, (payload) => stateManager.signPublicPayload(payload)));
 
 // Conecta rotas REST
 app.use('/api/v0', createApiRouter(stateManager, telehealthService, persistence));
@@ -34,11 +36,11 @@ app.get('/api/v0/events/stream', (req: Request, res: Response) => {
   res.flushHeaders();
 
   // Envia estado inicial imediatamente
-  res.write(`data: ${JSON.stringify(stateManager.getAllStates())}\n\n`);
+  res.write(`data: ${JSON.stringify(getPublicStates())}\n\n`);
 
   // Assina mudancas do StateManager
   const unsubscribe = stateManager.subscribe((states) => {
-    res.write(`data: ${JSON.stringify(states)}\n\n`);
+    res.write(`data: ${JSON.stringify(states.map((state) => KAnonymityGuard.sanitizeState(state, (payload) => stateManager.signPublicPayload(payload))))}\n\n`);
   });
 
   req.on('close', () => {
@@ -51,11 +53,11 @@ const wss = new WebSocketServer({ server, path: '/ws' });
 
 wss.on('connection', (ws: WebSocket) => {
   // Envia snapshot inicial
-  ws.send(JSON.stringify({ type: 'SNAPSHOT', data: stateManager.getAllStates() }));
+  ws.send(JSON.stringify({ type: 'SNAPSHOT', data: getPublicStates() }));
 
   const unsubscribe = stateManager.subscribe((states) => {
     if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'UPDATE', data: states }));
+      ws.send(JSON.stringify({ type: 'UPDATE', data: states.map((state) => KAnonymityGuard.sanitizeState(state, (payload) => stateManager.signPublicPayload(payload))) }));
     }
   });
 

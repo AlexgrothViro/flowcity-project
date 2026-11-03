@@ -136,7 +136,7 @@ export const TotemView: React.FC<TotemViewProps> = ({ units, states }) => {
                   ) : (
                     <div className="space-y-0.5">
                       <span className="text-4xl md:text-5xl font-black font-mono tracking-tight block">
-                        ~{metric?.wait_med_min ?? 0}
+                        {metric?.wait_med_min == null ? "Indisponível" : "~" + metric.wait_med_min}
                       </span>
                       <span className="text-xs font-extrabold uppercase tracking-widest opacity-85">
                         MINUTOS

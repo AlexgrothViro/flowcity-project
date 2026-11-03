@@ -9,6 +9,7 @@ import {
   fetchSpecialistReferrals,
   answerSpecialistReferral
 } from '../services/api.ts';
+import { SituationRoom } from '../components/SituationRoom.tsx';
 import {
   Activity,
   Ambulance,
@@ -75,21 +76,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ units, states }) =
               <Activity className="w-5 h-5" />
             </span>
             <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
-              Central de Regulação e Telemetria de Urgências — Novo Hamburgo
+              Sala de Situação — FlowCity Saúde
             </h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Painel unificado de comando: HMNH, UPA Canudos, USFs e Frota do SAMU
+            Painel demonstrativo de fila, salas, projeções e cenários
           </p>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
           <span className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 font-medium text-slate-600">
-            Atualização: <strong className="text-slate-900 font-mono">Tempo Real (SSE)</strong>
+            Atualização: <strong className="text-slate-900 font-mono">Simulação local (SSE)</strong>
           </span>
           <span className="px-3 py-1.5 rounded-xl bg-cyan-50 border border-cyan-200 font-bold text-cyan-800 flex items-center gap-1.5">
             <Zap className="w-3.5 h-3.5 text-cyan-600" />
-            Previsão Ativa
+            Previsão demonstrativa
           </span>
         </div>
       </div>
@@ -103,7 +104,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ units, states }) =
             <Users className="w-4 h-4 text-cyan-600" />
           </div>
           <div className="text-3xl font-black text-slate-900">
-            {metrics?.total_pacientes_em_fila ?? 0}
+            {metrics?.total_pacientes_em_fila === null ? "Suprimido" : metrics?.total_pacientes_em_fila ?? 0}
           </div>
           <div className="text-[11px] text-slate-500">
             Distribuídos em 4 unidades integradas
@@ -117,11 +118,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ units, states }) =
             <Clock className="w-4 h-4 text-amber-500" />
           </div>
           <div className="text-3xl font-black text-amber-700">
-            ~{metrics?.tempo_medio_amarelo_rede_min ?? 0} min
+            ~{metrics?.tempo_medio_amarelo_rede_min === null ? "Indisponível" : metrics?.tempo_medio_amarelo_rede_min ?? 0} min
           </div>
           <div className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3" />
-            Meta SUS: até 60 minutos
+            Métrica do motor simulado
           </div>
         </div>
 
@@ -132,7 +133,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ units, states }) =
             <Ambulance className="w-4 h-4 text-rose-600" />
           </div>
           <div className="text-3xl font-black text-slate-900">
-            {metrics?.ambulancias_samu_retidas ?? 0}{' '}
+            {metrics?.ambulancias_samu_retidas === null ? "Suprimido" : metrics?.ambulancias_samu_retidas ?? 0}{' '}
             <span className="text-sm font-semibold text-slate-400">ambulâncias</span>
           </div>
           <div className="text-[11px] text-slate-500">
@@ -143,14 +144,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ units, states }) =
         {/* Network Balance Index */}
         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
-            <span>Índice de Balanceamento</span>
+            <span>Ocupação média das salas</span>
             <TrendingUp className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="text-3xl font-black text-emerald-700">
-            {Math.round((metrics?.indice_balanceamento_rede ?? 0.74) * 100)}%
+            {Math.round((metrics?.ocupacao_media_salas ?? 0) * 100)}%
           </div>
           <div className="text-[11px] text-slate-500">
-            Eficiência da regulação de portas
+            Média das ocupações simuladas
           </div>
         </div>
       </div>
@@ -169,6 +170,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ units, states }) =
           </div>
         </div>
       )}
+
+      <SituationRoom units={units} states={states} />
 
       {/* Live Units Detail Grid */}
       <div className="space-y-3">
@@ -214,13 +217,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ units, states }) =
                     <span className="text-blue-600">Azul</span>
                   </div>
                   <div className="grid grid-cols-5 text-center font-mono text-xs">
-                    <span>{st.pow.prioridades.vermelho.wait_med_min}m</span>
-                    <span>{st.pow.prioridades.laranja.wait_med_min}m</span>
+                    <span>{st.pow.prioridades.vermelho.wait_med_min === null ? "Suprimido" : st.pow.prioridades.vermelho.wait_med_min + "m"}</span>
+                    <span>{st.pow.prioridades.laranja.wait_med_min === null ? "Suprimido" : st.pow.prioridades.laranja.wait_med_min + "m"}</span>
                     <span className="font-bold text-amber-700">
-                      {st.pow.prioridades.amarelo.wait_med_min}m
+                      {st.pow.prioridades.amarelo.wait_med_min === null ? "Suprimido" : st.pow.prioridades.amarelo.wait_med_min + "m"}
                     </span>
-                    <span>{st.pow.prioridades.verde.wait_med_min}m</span>
-                    <span>{st.pow.prioridades.azul.wait_med_min}m</span>
+                    <span>{st.pow.prioridades.verde.wait_med_min === null ? "Suprimido" : st.pow.prioridades.verde.wait_med_min + "m"}</span>
+                    <span>{st.pow.prioridades.azul.wait_med_min === null ? "Suprimido" : st.pow.prioridades.azul.wait_med_min + "m"}</span>
                   </div>
                 </div>
 
@@ -276,10 +279,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ units, states }) =
           <div>
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Stethoscope className="w-5 h-5 text-cyan-700" />
-              Fila de Teleinterconsulta & Especialistas (Matriciamento SUS)
+              Solicitações demonstrativas de encaminhamento
             </h2>
             <p className="text-xs text-slate-500">
-              Casos encaminhados pela Atenção Primária para discussão com médicos especialistas da rede municipal
+              Solicitações sintéticas aguardando revisão humana; sem integração com SISREG ou TelessaúdeRS.
             </p>
           </div>
           <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-cyan-100 text-cyan-800 border border-cyan-200">
@@ -354,7 +357,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ units, states }) =
                   Matriciamento Médico — {selectedReferral.especialidade}
                 </span>
                 <h3 className="text-lg font-bold text-slate-900">
-                  Emitir Parecer Especializado de Teleinterconsulta
+                  Registrar parecer demonstrativo
                 </h3>
               </div>
               <button
@@ -380,7 +383,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ units, states }) =
               <textarea
                 value={specialistOpinion}
                 onChange={(e) => setSpecialistOpinion(e.target.value)}
-                placeholder="Ex: Conduta validada. Ajustar dose para 10mg à noite. Caso mantenha PA > 140/90 após 14 dias, agenda-se consulta presencial regulada no ambulatório de cardiologia do HMNH."
+                placeholder="Resumo sintético do parecer profissional. Use apenas conteúdo fictício."
                 rows={4}
                 className="w-full text-xs p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
               />
@@ -399,7 +402,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ units, states }) =
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-md shadow-cyan-600/20"
               >
                 <Send className="w-3.5 h-3.5" />
-                {submittingOpinion ? 'Gravando...' : 'Assinar Parecer e Notificar Clínico'}
+                {submittingOpinion ? 'Gravando...' : 'Registrar parecer demonstrativo'}
               </button>
             </div>
           </div>
