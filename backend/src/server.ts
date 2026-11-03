@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { StateManager } from './services/stateManager.js';
 import { TelehealthService } from './services/telehealth.js';
 import { createApiRouter } from './routes/api.js';
+import { PersistenceService } from './services/persistence.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,8 +19,9 @@ app.use(cors());
 app.use(express.json());
 
 // Instancia servicos core
-const stateManager = new StateManager();
-const telehealthService = new TelehealthService();
+const persistence = new PersistenceService();
+const stateManager = new StateManager(persistence);
+const telehealthService = new TelehealthService(persistence);
 
 // Conecta rotas REST
 app.use('/api/v0', createApiRouter(stateManager, telehealthService));
@@ -81,9 +83,26 @@ app.get('*', (req: Request, res: Response, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`🚀 FlowCity Saúde API rodando na porta ${PORT}`);
-  console.log(`📍 Cidade Âncora: Novo Hamburgo - RS (HMNH, UPA Canudos, USF Santo Afonso, USF Canudos)`);
-  console.log(`📡 WebSocket ativo em ws://localhost:${PORT}/ws`);
-  console.log(`🔑 Chave pública Ed25519 gerada: ${stateManager.getPublicKey().substring(0, 16)}...`);
+
+async function startServer(): Promise<void> {
+  await stateManager.restorePersistedStates();
+  await telehealthService.restorePersistedRecords();
+  await persistence.appendAudit({ actor: 'system', action: 'server.started', entityType: 'system' });
+  server.listen(PORT, () => {
+    console.log(JSON.stringify({ level: 'info', event: 'server_started', port: PORT, persistence: persistence.driver }));
+  });
+}
+
+void startServer().catch((error: unknown) => {
+  console.error(JSON.stringify({ level: 'error', event: 'server_start_failed', message: error instanceof Error ? error.message : 'unknown error' }));
+  process.exitCode = 1;
 });
+
+async function shutdown(): Promise<void> {
+  stateManager.destroy();
+  server.close();
+  await persistence.close();
+}
+
+process.on('SIGINT', () => { void shutdown(); });
+process.on('SIGTERM', () => { void shutdown(); });

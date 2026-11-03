@@ -28,7 +28,8 @@ export class EsusCollectorAdapter {
       cnes,
       timestamp: new Date().toISOString(),
       tipo_coleta: 'e-SUS/PEC Read-Replica',
-      status: 'CONECTADO',
+      status: 'SIMULADO',
+      data_mode: 'SYNTHETIC_DEMO',
       metricas_agregadas: {
         fila_acolhimento: Math.floor(Math.random() * 5) + 1,
         tempo_medio_acolhimento_min: 8,

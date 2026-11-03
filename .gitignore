@@ -25,3 +25,8 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+# Local persistent FlowCity data (never commit health/service records)
+data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

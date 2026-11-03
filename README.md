@@ -137,6 +137,10 @@ Inicia a aplicação completa, o cache em memória Redis e o banco TimescaleDB/P
 
 ---
 
+## Persistência e modo de demonstração
+
+O backend mantém snapshots e registros em SQLite WAL por padrão e pode usar PostgreSQL via `DATABASE_URL`. Os dados gerados pelo modo de demonstração são identificados como sintéticos. Consulte [Persistência e dados de demonstração](docs/PERSISTENCIA_E_HISTORICO.md) antes de usar dados de exemplo.
+
 ## 📚 Documentação Técnica, Jurídica e Operacional
 
 * [Dossiê Executivo & Proposta para Gestores Públicos](docs/DOSSIE_EXECUTIVO_GOV.md) *(Diagnóstico, economia de recursos e contratação via Marco Legal das Startups)*

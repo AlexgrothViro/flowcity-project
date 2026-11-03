@@ -1,61 +1,46 @@
 import { TeleconsultationAppointment, SpecialistReferral, SpecialistField } from '../types.js';
+import { PersistenceService } from './persistence.js';
 
 export class TelehealthService {
   private appointments: Map<string, TeleconsultationAppointment> = new Map();
   private referrals: Map<string, SpecialistReferral> = new Map();
 
-  constructor() {
-    this.seedInitialAppointments();
+  public constructor(private readonly persistence: PersistenceService = new PersistenceService()) {}
+
+  private persist(operation: Promise<void>): void {
+    void operation.catch((error: unknown) => {
+      console.error(JSON.stringify({ level: 'error', event: 'telehealth_persistence_failed', message: error instanceof Error ? error.message : 'unknown error' }));
+    });
   }
 
-  private seedInitialAppointments() {
-    // Cria alguns agendamentos para demonstracao inicial
-    const seedId = 'tele_nh_001';
-    const seedReferral: SpecialistReferral = {
-      id: 'ref_cardio_101',
-      especialidade: 'Cardiologia',
-      tipo: 'TELEINTERCONSULTA_IMEDIATA',
-      justificativa_clinica: 'Paciente hipertenso de 58 anos com oscilação pressórica recente pós-ajuste de Losartana. Dúvida na associação de Anlodipino.',
-      prioridade_encaminhamento: 'MEDIA',
-      status: 'EM_ANALISE',
-      timestamp_solicitacao: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-      crm_solicitante: 'CRM/RS 45892 (Dr. Lucas Mendes - MFC USF Santo Afonso)'
-    };
-
-    this.referrals.set(seedReferral.id, seedReferral);
-
-    this.appointments.set(seedId, {
-      id: seedId,
-      protocolo: '2026-NH-TELE-8941',
-      paciente_anonimizado_id: 'PAC-NH-***-72',
-      timestamp_criacao: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      status: 'EM_ANDAMENTO',
-      medico_mfc_nome: 'Dra. Mariana Costa (Clínica de Família)',
-      medico_crm: 'CRM/RS 38412',
-      link_sala_webrtc: 'https://tele.flowcity.saude.gov.br/room/nh-room-8941',
-      resumo_caso: 'Acolhimento de paciente com queixa de tosse seca há 5 dias sem dispneia.',
-      encaminhamento_especialista: seedReferral
-    });
+  public async restorePersistedRecords(): Promise<void> {
+    await this.persistence.ready;
+    const [appointments, referrals] = await Promise.all([
+      this.persistence.loadAppointments(),
+      this.persistence.loadReferrals()
+    ]);
+    this.appointments = new Map(appointments.map((appointment) => [appointment.id, appointment]));
+    this.referrals = new Map(referrals.map((referral) => [referral.id, referral]));
   }
 
   public createAppointment(pacienteAnonimizadoId: string, resumoCaso: string): TeleconsultationAppointment {
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const id = `tele_nh_${Date.now()}`;
-    const protocolo = `2026-NH-TELE-${randomSuffix}`;
-
     const appointment: TeleconsultationAppointment = {
       id,
-      protocolo,
+      protocolo: `2026-NH-TELE-${randomSuffix}`,
       paciente_anonimizado_id: pacienteAnonimizadoId,
       timestamp_criacao: new Date().toISOString(),
       status: 'AGENDADA',
-      medico_mfc_nome: 'Dr. Plantonista Telessaúde APS',
-      medico_crm: 'CRM/RS 41092',
-      link_sala_webrtc: `https://tele.flowcity.saude.gov.br/room/nh-room-${randomSuffix}`,
+      medico_mfc_nome: 'Equipe de Atenção Primária',
+      medico_crm: '',
+      link_sala_webrtc: '',
       resumo_caso: resumoCaso
     };
-
     this.appointments.set(id, appointment);
+    this.persist(this.persistence.saveAppointment(appointment));
+    this.persist(this.persistence.appendWorkflowEvent('consultation', null, { appointmentId: id, status: appointment.status }));
+    this.persist(this.persistence.appendAudit({ actor: 'telehealth', action: 'appointment.created', entityType: 'telehealth_appointment', entityId: id }));
     return appointment;
   }
 
@@ -87,15 +72,16 @@ export class TelehealthService {
       timestamp_solicitacao: new Date().toISOString(),
       crm_solicitante: crmSolicitante
     };
-
     this.referrals.set(referralId, referral);
-
-    const appt = this.appointments.get(appointmentId);
-    if (appt) {
-      appt.encaminhamento_especialista = referral;
-      this.appointments.set(appointmentId, appt);
+    const appointment = this.appointments.get(appointmentId);
+    if (appointment) {
+      appointment.encaminhamento_especialista = referral;
+      this.appointments.set(appointmentId, appointment);
+      this.persist(this.persistence.saveAppointment(appointment));
     }
-
+    this.persist(this.persistence.saveReferral(referral));
+    this.persist(this.persistence.appendWorkflowEvent('consultation', null, { appointmentId, referralId, specialty: especialidade }));
+    this.persist(this.persistence.appendAudit({ actor: 'telehealth', action: 'referral.requested', entityType: 'specialist_referral', entityId: referralId }));
     return referral;
   }
 
@@ -112,10 +98,17 @@ export class TelehealthService {
   ): SpecialistReferral | undefined {
     const referral = this.referrals.get(referralId);
     if (!referral) return undefined;
-
     referral.parecer_especialista = parecer;
     referral.status = status;
     this.referrals.set(referralId, referral);
+    this.persist(this.persistence.saveReferral(referral));
+    this.persist(this.persistence.appendAudit({
+      actor: 'telehealth',
+      action: 'referral.answered',
+      entityType: 'specialist_referral',
+      entityId: referralId,
+      details: { status }
+    }));
     return referral;
   }
 }

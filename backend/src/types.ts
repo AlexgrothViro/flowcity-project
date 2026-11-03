@@ -77,6 +77,7 @@ export interface UnitLiveState {
   idade_do_dado_s: number;
   fontes: DataSourceWeight[];
   assinatura: string;
+  data_mode?: 'OPERATIONAL' | 'SYNTHETIC_DEMO';
 }
 
 export interface RouteRecommendation {

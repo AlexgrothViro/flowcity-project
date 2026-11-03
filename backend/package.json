@@ -9,12 +9,17 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "tsx --test tests/**/*.test.ts",
-    "simulate": "tsx src/scripts/runSimulator.ts"
+    "simulate": "tsx src/scripts/runSimulator.ts",
+    "seed:synthetic": "tsx src/scripts/seedSyntheticHistory.ts"
   },
   "dependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/pg": "^8.23.1",
+    "better-sqlite3": "^12.11.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "pg": "^8.23.1",
     "tweetnacl": "^1.0.3",
     "tweetnacl-util": "^0.15.1",
     "ws": "^8.18.0",

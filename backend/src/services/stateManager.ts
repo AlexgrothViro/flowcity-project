@@ -3,16 +3,20 @@ import { ManchesterQueuingModel } from '../engine/queuing.js';
 import { NowcastingEngine } from '../engine/nowcasting.js';
 import { SignerService } from './signer.js';
 import { UnitLiveState, ManchesterPriority } from '../types.js';
+import { PersistenceService } from './persistence.js';
 
 export class StateManager {
   private liveStates: Map<string, UnitLiveState> = new Map();
   private nowcastingEngine: NowcastingEngine = new NowcastingEngine();
   private signer: SignerService = new SignerService();
   private listeners: Array<(states: UnitLiveState[]) => void> = [];
+  private snapshotTimer: NodeJS.Timeout | null = null;
 
-  constructor() {
+  constructor(private readonly persistence: PersistenceService = new PersistenceService()) {
     this.initializeStates();
     this.startSimulationTicker();
+    this.snapshotTimer = setInterval(() => { void this.persistSnapshots(); }, 60_000);
+    this.snapshotTimer.unref?.();
   }
 
   public getPublicKey(): string {
@@ -65,6 +69,7 @@ export class StateManager {
 
       const payloadWithoutSig = {
         unidade_id: unit.id,
+        data_mode: 'SYNTHETIC_DEMO' as const,
         timestamp: new Date().toISOString(),
         pow: {
           prioridades: powPriorities,
@@ -120,6 +125,29 @@ export class StateManager {
       clearInterval(this.timer);
       this.timer = null;
     }
+    if (this.snapshotTimer) {
+      clearInterval(this.snapshotTimer);
+      this.snapshotTimer = null;
+    }
+  }
+
+  public async restorePersistedStates(): Promise<void> {
+    await this.persistence.ready;
+    const snapshots = await this.persistence.loadLatestSnapshots();
+    for (const snapshot of snapshots) {
+      if (!this.liveStates.has(snapshot.unidade_id)) continue;
+      const { assinatura: _oldSignature, ...payload } = snapshot;
+      this.liveStates.set(snapshot.unidade_id, { ...payload, assinatura: this.signer.signPayload(payload) });
+    }
+    await this.persistSnapshots();
+  }
+
+  private async persistSnapshots(): Promise<void> {
+    try {
+      for (const state of this.liveStates.values()) await this.persistence.saveSnapshot(state);
+    } catch (error) {
+      console.error(JSON.stringify({ level: 'error', event: 'snapshot_persistence_failed', message: error instanceof Error ? error.message : 'unknown error' }));
+    }
   }
 
   private tickSimulation() {
@@ -164,6 +192,7 @@ export class StateManager {
 
       const nextPayload = {
         unidade_id: unit.id,
+        data_mode: state.data_mode || 'SYNTHETIC_DEMO',
         timestamp: new Date().toISOString(),
         pow: {
           prioridades: updatedPow,
